@@ -1,50 +1,50 @@
-import { RigidBody } from '@react-three/rapier';
+import { useRef } from 'react';
+import { CapsuleCollider, RigidBody } from '@react-three/rapier';
 import { PALETTE } from '../config/palette';
 import { PLAYER } from '../config/tuning';
+import { CharacterModel, type CharacterAnimation } from '../scene/CharacterModel';
 import { useGameStore } from '../state/useGameStore';
 import type { NpcSpec } from './roster';
 
 /**
  * One resident, standing in place.
  *
- * A capsule with a head, matching the player's proportions so the two read as
- * the same species. NPCs do not move in Phase 1; the rigid body is fixed and
- * exists only so the player collides with them rather than walking through.
+ * NPCs use the same collider proportions as the player, so the town treats
+ * everyone as the same size of obstacle. They do not move in Phase 1, so the
+ * body is fixed and the clip is always Idle; Phase 3 gives them somewhere to
+ * be and the same walk cycle the player already uses.
  */
 export function Npc({ spec }: { spec: NpcSpec }) {
   const [x, z] = spec.position;
   const isNearby = useGameStore((state) => state.nearbyNpcId === spec.identity.id);
 
-  const radius = PLAYER.capsuleRadius;
-  const halfHeight = PLAYER.capsuleHalfHeight;
+  // Constant for now, but typed as a ref so that giving NPCs a walk cycle in
+  // Phase 3 needs no change on this side of the interface.
+  const animation = useRef<CharacterAnimation>('Idle');
+
+  const height = PLAYER.modelHeight;
 
   return (
-    <group position={[x, halfHeight + radius, z]} rotation={[0, spec.facing, 0]}>
-      <RigidBody type="fixed" colliders="hull">
-        <mesh castShadow>
-          <capsuleGeometry args={[radius, halfHeight * 2, 4, 12]} />
-          <meshLambertMaterial color={PALETTE.npc} />
-        </mesh>
-      </RigidBody>
+    <RigidBody
+      type="fixed"
+      colliders={false}
+      position={[x, height / 2, z]}
+      rotation={[0, spec.facing, 0]}
+    >
+      <CapsuleCollider args={[PLAYER.capsuleHalfHeight, PLAYER.capsuleRadius]} />
 
-      <mesh position={[0, halfHeight + radius * 0.9, 0]} castShadow>
-        <sphereGeometry args={[radius * 0.85, 12, 10]} />
-        <meshLambertMaterial color={PALETTE.playerAccent} />
-      </mesh>
+      <group position={[0, -height / 2, 0]}>
+        <CharacterModel model={spec.model} height={height} animation={animation} />
+      </group>
 
-      <mesh position={[0, halfHeight + radius * 0.9, -radius * 0.8]}>
-        <coneGeometry args={[radius * 0.22, radius * 0.5, 8]} />
-        <meshLambertMaterial color={PALETTE.trim} />
-      </mesh>
-
-      {/* A ring on the ground when in range. The prompt in the HUD says what to
-          press; this says who it would be talking to. */}
+      {/* A ring on the ground when in range. The HUD prompt says what to press;
+          this says who it would be talking to. */}
       {isNearby && (
-        <mesh position={[0, -(halfHeight + radius) + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius * 1.5, radius * 1.9, 24]} />
+        <mesh position={[0, -height / 2 + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[PLAYER.capsuleRadius * 1.6, PLAYER.capsuleRadius * 2.1, 24]} />
           <meshBasicMaterial color={PALETTE.playerAccent} transparent opacity={0.9} />
         </mesh>
       )}
-    </group>
+    </RigidBody>
   );
 }

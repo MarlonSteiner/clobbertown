@@ -7,6 +7,7 @@ import type { InputState } from '../input/InputState';
 import type { LookState } from '../input/useMouseLook';
 import { Npc } from '../npc/Npc';
 import { NPCS } from '../npc/roster';
+import './preload';
 import { FollowCamera } from '../player/FollowCamera';
 import { Player } from '../player/Player';
 import { Lighting } from './Lighting';

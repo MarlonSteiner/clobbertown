@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { PLAYER } from '../config/tuning';
 import type { InputState } from '../input/InputState';
 import type { LookState } from '../input/useMouseLook';
-import { PlayerModel } from './PlayerModel';
+import { CharacterModel, type CharacterAnimation } from '../scene/CharacterModel';
+import { chooseAnimation } from './playerAnimation';
+import { PLAYER_MODEL } from './playerModel';
 import { useCharacterController } from './useCharacterController';
 import {
   applyGravity,
@@ -17,6 +19,9 @@ import {
   shortestAngleDelta,
   type Vec2,
 } from './movement';
+
+/** How tall the player stands, matched to the collider. */
+const CHARACTER_HEIGHT = PLAYER.modelHeight;
 
 /** Where the player starts: on the square, a little south of centre. */
 const SPAWN: [number, number, number] = [0, 2, 8];
@@ -52,6 +57,8 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
   const lastGroundedAt = useRef(0);
   /** The direction the model is facing, eased towards the direction of travel. */
   const facing = useRef(0);
+  /** Which clip the model should be playing. Read by CharacterModel each frame. */
+  const animation = useRef<CharacterAnimation>('Idle');
 
   // Scratch objects, reused each frame. Allocating vectors inside useFrame is
   // the most reliable way to give a game a stuttering garbage collector.
@@ -138,6 +145,9 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
 
     positionOut.current.copy(nextPosition.current);
     updateFacing(model.current, horizontalVelocity.current, facing, delta);
+
+    const speed = Math.hypot(horizontalVelocity.current.x, horizontalVelocity.current.z);
+    animation.current = chooseAnimation(speed, grounded);
   });
 
   return (
@@ -151,8 +161,11 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
       enabledRotations={[false, false, false]}
     >
       <CapsuleCollider ref={collider} args={[PLAYER.capsuleHalfHeight, PLAYER.capsuleRadius]} />
-      <group ref={model}>
-        <PlayerModel />
+      {/* The capsule is centred on the rigid body's origin, but the model's
+          own origin is at its feet, so it is dropped by half the capsule's
+          height to stand on the same ground the collider rests on. */}
+      <group ref={model} position={[0, -CHARACTER_HEIGHT / 2, 0]}>
+        <CharacterModel model={PLAYER_MODEL} height={CHARACTER_HEIGHT} animation={animation} />
       </group>
     </RigidBody>
   );

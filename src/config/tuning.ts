@@ -55,6 +55,15 @@ export const PLAYER = {
   maxSlopeClimbDegrees: 50,
   /** Below this speed the character is treated as stopped, killing float. */
   idleSpeedThreshold: 0.05,
+
+  /**
+   * How tall the character model stands. Derived from the collider rather than
+   * set independently, so the visible body and the thing that actually bumps
+   * into walls can never drift apart.
+   */
+  get modelHeight(): number {
+    return this.capsuleHalfHeight * 2 + this.capsuleRadius * 2;
+  },
 } as const;
 
 export const CAMERA = {

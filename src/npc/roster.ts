@@ -4,6 +4,8 @@ import { StubNpcBrain } from './StubNpcBrain';
 /** An NPC as the scene needs it: who they are, where they stand, and their mind. */
 export interface NpcSpec {
   identity: NpcIdentity;
+  /** Character model, under `public/models/`. */
+  model: string;
   /** Where they stand, on the ground plane. */
   position: [x: number, z: number];
   /** Which way they face, in radians. */
@@ -23,6 +25,9 @@ export const NPCS: NpcSpec[] = [
       name: 'Gertie',
       role: 'Runs the bakery. Knows everyone, and tells everyone.',
     },
+    // A chef, because she runs the bakery. Phase 3 will want the role and the
+    // look to agree, since the LLM is told what she does for a living.
+    model: 'characters/chef-female.glb',
     position: [4, 3],
     facing: -2.4,
   },
