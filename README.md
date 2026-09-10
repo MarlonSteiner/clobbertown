@@ -33,7 +33,9 @@ The click-to-play screen is not decoration: browsers only grant pointer lock in
 response to a real user gesture, so the game cannot capture the mouse on load.
 
 The first load takes a few seconds while Rapier's WebAssembly physics engine
-downloads and compiles. The overlay says "Building the town…" until it is ready.
+compiles and the models download, around 4MB in total. The overlay says
+"Building the town…" until everything is ready, and cannot be clicked through
+before then.
 
 ### Other commands
 
@@ -86,16 +88,19 @@ everything. Two details exist purely to protect the eventual swap:
   report what the player did, and how Phase 3's NPCs will gossip. Without it,
   memory has no way in.
 
-**Per-frame state stays out of React.** Input, velocity and player position
-live in refs, and the Zustand store only holds things the interface redraws for.
-Putting a position that changes 60 times a second into React state would
-re-render the scene at frame rate for no benefit.
+**Per-frame state stays out of React.** Input, velocity, player position and
+the current animation clip all live in refs, and the Zustand store only holds
+things the interface redraws for. Putting a position that changes 60 times a
+second into React state would re-render the scene at frame rate for no benefit.
 
 ## Testing
 
-The movement maths, the interaction range check, and the NPC brain contract are
-pure functions with unit tests, so the feel of the character can be checked
-without a browser or a physics world:
+The movement maths, animation selection, the interaction range check, the town
+layout and the NPC brain contract all have unit tests, so the feel of the
+character and the arrangement of the town can be checked without a browser or a
+physics world. The layout tests are worth knowing about: they check that no two
+building plots overlap and that nothing is standing in a road, which is tedious
+to verify by walking around and easy to break by nudging one number.
 
 ```bash
 npm test
@@ -106,9 +111,15 @@ running the game.
 
 ## Art
 
-Stylised low-poly cartoon: chunky proportions, flat shading, a warm and
-deliberately small palette. A toy town, not a simulation.
+Stylised low-poly cartoon: chunky proportions, a warm and deliberately small
+palette. A toy town, not a simulation.
 
-Phase 1 uses primitives only, with no third-party assets. See
-[`MODELS.md`](MODELS.md) for how to drop real models in and where to source
-CC0 packs.
+The buildings and trees are Kenney's City Kit and Nature Kit; the townsfolk are
+Quaternius's Ultimate Animated Character Pack. Everything is CC0. The ground,
+streets and square are still primitives, since no pack covers them.
+
+Models are not scaled by hand: the layout says how much space a thing should
+occupy and the model is fitted to it, and colliders are measured from the
+model rather than written out separately. See [`MODELS.md`](MODELS.md) for the
+full asset list, the directory layout, and the two material bugs that are
+repaired at load time.
