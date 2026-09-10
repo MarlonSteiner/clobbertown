@@ -1,38 +1,36 @@
-import { RigidBody } from '@react-three/rapier';
-import { PALETTE } from '../config/palette';
+import { CylinderCollider, RigidBody } from '@react-three/rapier';
 import type { TreeSpec } from './layout';
-
-const TRUNK_HEIGHT = 2.2;
-const TRUNK_RADIUS = 0.22;
-const CANOPY_RADIUS = 1.6;
+import { fitToHeight, useModel } from './useModel';
 
 /**
- * A low-poly tree: a trunk and two offset spheres for the canopy.
+ * Collider radius as a fraction of the tree's own width.
  *
- * The icosahedron at detail 0 gives faceted, chunky foliage that matches the
- * art direction, and costs a fraction of a smooth sphere. Only the trunk has
- * collision, so the player can brush through overhanging leaves.
+ * Deliberately small: the collider is meant to be the trunk, not the canopy.
+ * A player brushing through overhanging leaves is fine and expected, while
+ * being stopped in mid-air by a branch is not.
  */
+const TRUNK_RADIUS_FRACTION = 0.12;
+/** How much of the tree's height the trunk collider covers. */
+const TRUNK_HEIGHT_FRACTION = 0.45;
+
+/** One tree, scaled to the height its layout entry asks for. */
 export function Tree({ spec }: { spec: TreeSpec }) {
   const [x, z] = spec.position;
+  const { object, size } = useModel(spec.model);
+
+  const scale = fitToHeight(size, spec.height);
+  const radius = Math.max(size.x, size.z) * scale * TRUNK_RADIUS_FRACTION;
+  const halfHeight = (spec.height * TRUNK_HEIGHT_FRACTION) / 2;
 
   return (
-    <group position={[x, 0, z]} scale={spec.scale}>
-      <RigidBody type="fixed" colliders="cuboid">
-        <mesh position={[0, TRUNK_HEIGHT / 2, 0]} castShadow>
-          <cylinderGeometry args={[TRUNK_RADIUS, TRUNK_RADIUS * 1.3, TRUNK_HEIGHT, 6]} />
-          <meshLambertMaterial color={PALETTE.trunk} flatShading />
-        </mesh>
-      </RigidBody>
-
-      <mesh position={[0, TRUNK_HEIGHT + 1.0, 0]} castShadow>
-        <icosahedronGeometry args={[CANOPY_RADIUS, 0]} />
-        <meshLambertMaterial color={PALETTE.foliage} flatShading />
-      </mesh>
-      <mesh position={[0.5, TRUNK_HEIGHT + 1.9, -0.3]} castShadow>
-        <icosahedronGeometry args={[CANOPY_RADIUS * 0.7, 0]} />
-        <meshLambertMaterial color={PALETTE.foliage} flatShading />
-      </mesh>
-    </group>
+    <RigidBody
+      type="fixed"
+      colliders={false}
+      position={[x, 0, z]}
+      rotation={[0, spec.rotation, 0]}
+    >
+      <CylinderCollider args={[halfHeight, radius]} position={[0, halfHeight, 0]} />
+      <primitive object={object} scale={scale} />
+    </RigidBody>
   );
 }

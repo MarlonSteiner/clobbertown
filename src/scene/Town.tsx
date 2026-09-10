@@ -1,8 +1,10 @@
+import { useGLTF } from '@react-three/drei';
 import { Building } from './Building';
 import { Boundary } from './Boundary';
 import { Ground } from './Ground';
 import { Tree } from './Tree';
 import { BUILDINGS, TREES } from './layout';
+import { MODEL_BASE } from './useModel';
 
 /**
  * Assembles the town from the layout data.
@@ -23,4 +25,12 @@ export function Town() {
       ))}
     </>
   );
+}
+
+/* Start fetching every model as soon as this module is imported, rather than
+   when each building first renders. The models are what the loading screen is
+   waiting for, so fetching them in parallel is the difference between one wait
+   and twenty-six sequential ones. Duplicate paths collapse in the cache. */
+for (const path of new Set([...BUILDINGS, ...TREES].map((spec) => spec.model))) {
+  useGLTF.preload(MODEL_BASE + path);
 }

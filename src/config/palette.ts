@@ -1,9 +1,10 @@
 /**
- * The town's colour palette.
+ * The colours of everything the game draws by hand.
  *
- * Warm, slightly desaturated, and deliberately limited. A small palette is
- * what makes a low-poly scene read as a toy town rather than as untextured
- * placeholder geometry, so new colours should be added reluctantly.
+ * Buildings and trees are textured models and are not listed here; this covers
+ * the ground, the sky, and the two characters. The palette stays warm, slightly
+ * desaturated and deliberately small, because a limited palette is what makes
+ * the scene read as a toy town rather than as untextured placeholder geometry.
  */
 export const PALETTE = {
   sky: '#bfe3f2',
@@ -13,40 +14,19 @@ export const PALETTE = {
   cobble: '#d9cbb2',
   road: '#b6ab97',
 
-  /** Building walls, cycled through so neighbouring houses differ. */
-  walls: ['#e8b98a', '#d98c7a', '#e5d3a6', '#b4c9a8', '#c9a9c4', '#e0c391'] as const,
-  /** Roofs, matched by index to the wall above. */
-  roofs: ['#a35b4a', '#8c4b48', '#a8703f', '#6f8a5e', '#7d5f7a', '#9a6b3f'] as const,
-
-  trim: '#6b4f3a',
-  window: '#7fb3c8',
-  foliage: '#5f9147',
-  trunk: '#7a5a3c',
+  /**
+   * Skin tone for the character models.
+   *
+   * This exists because every character in the Quaternius pack ships with its
+   * "Skin" material set to near-black while a separate near-white "Face"
+   * material covers a small patch. The value is byte-identical across all of
+   * them, so it is an export artefact rather than a design choice, and left
+   * alone the townsfolk render as silhouettes. See CharacterModel for the fix.
+   */
+  skin: '#c08a5e',
 
   player: '#4a7fc1',
   playerAccent: '#f2e2c4',
   npc: '#d4674f',
+  npcAccent: '#6b4f3a',
 } as const;
-
-/**
- * Colour lookups for buildings.
- *
- * Buildings choose a colour by index, and the index wraps, so adding a
- * fourteenth building to a six-colour palette can never fall off the end.
- * The non-empty tuple type is what lets this return a plain `string` under
- * `noUncheckedIndexedAccess`.
- */
-type ColourRing = readonly [string, ...string[]];
-
-export function wallColour(index: number): string {
-  return cycle(PALETTE.walls, index);
-}
-
-export function roofColour(index: number): string {
-  return cycle(PALETTE.roofs, index);
-}
-
-function cycle(colours: ColourRing, index: number): string {
-  const wrapped = ((index % colours.length) + colours.length) % colours.length;
-  return colours[wrapped] ?? colours[0];
-}
