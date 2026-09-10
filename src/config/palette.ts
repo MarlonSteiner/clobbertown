@@ -27,3 +27,26 @@ export const PALETTE = {
   playerAccent: '#f2e2c4',
   npc: '#d4674f',
 } as const;
+
+/**
+ * Colour lookups for buildings.
+ *
+ * Buildings choose a colour by index, and the index wraps, so adding a
+ * fourteenth building to a six-colour palette can never fall off the end.
+ * The non-empty tuple type is what lets this return a plain `string` under
+ * `noUncheckedIndexedAccess`.
+ */
+type ColourRing = readonly [string, ...string[]];
+
+export function wallColour(index: number): string {
+  return cycle(PALETTE.walls, index);
+}
+
+export function roofColour(index: number): string {
+  return cycle(PALETTE.roofs, index);
+}
+
+function cycle(colours: ColourRing, index: number): string {
+  const wrapped = ((index % colours.length) + colours.length) % colours.length;
+  return colours[wrapped] ?? colours[0];
+}
