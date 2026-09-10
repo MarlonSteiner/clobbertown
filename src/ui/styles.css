@@ -1,0 +1,148 @@
+/* Global reset and the game's full-window layout. */
+:root {
+  --ink: #2b2018;
+  --parchment: #f6ecd9;
+  --parchment-edge: #d8c3a0;
+  --shadow: rgba(43, 32, 24, 0.35);
+
+  font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  color: var(--ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #bfe3f2;
+}
+
+/* The canvas fills the window; every piece of UI is drawn over it. */
+canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* Overlays never eat mouse input unless they specifically need to, otherwise
+   they would steal the clicks that acquire pointer lock. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.start-screen {
+  display: grid;
+  place-items: center;
+  background: rgba(43, 32, 24, 0.55);
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.start-card {
+  background: var(--parchment);
+  border: 3px solid var(--parchment-edge);
+  border-radius: 14px;
+  padding: 28px 36px;
+  text-align: center;
+  max-width: 460px;
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
+.start-card h1 {
+  margin: 0 0 6px;
+  font-size: 34px;
+  letter-spacing: 0.5px;
+}
+
+.start-card p {
+  margin: 0 0 18px;
+  opacity: 0.75;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  text-align: left;
+  font-size: 15px;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+kbd {
+  background: #fff;
+  border: 1px solid var(--parchment-edge);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hint {
+  margin-top: 20px;
+  font-weight: 700;
+}
+
+/* The interact prompt sits just under the centre of the screen, where the
+   player is already looking. */
+.interact-prompt {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform: translateX(-50%);
+  background: rgba(43, 32, 24, 0.75);
+  color: var(--parchment);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 15px;
+}
+
+.dialogue {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  width: min(620px, calc(100vw - 48px));
+  background: var(--parchment);
+  border: 3px solid var(--parchment-edge);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 28px var(--shadow);
+}
+
+.dialogue-speaker {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+  opacity: 0.7;
+}
+
+.dialogue-line {
+  font-size: 19px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.dialogue-footer {
+  margin-top: 12px;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.corner-hint {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  font-size: 13px;
+  color: var(--parchment);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}

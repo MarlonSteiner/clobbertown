@@ -1,26 +1,52 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * Tracks whether the pointer is locked to the given element, and offers a way
- * to request it.
+ * Requests and tracks pointer lock on the given element.
  *
- * Escape releases the lock at the browser's insistence and cannot be
- * intercepted, so the game treats "unlocked" as "paused" and shows the
- * overlay again rather than trying to fight it.
+ * Losing the lock is treated as "the player stepped away", because Escape
+ * releasing the pointer is a browser behaviour no page can intercept, and a
+ * game that keeps running while the mouse is free feels broken. That is
+ * reported through `onLockLost` rather than by exposing the lock state as the
+ * game's pause flag, because the two are not the same thing: some contexts
+ * refuse pointer lock entirely, and there the game should still be playable
+ * on the keyboard rather than stuck behind an overlay forever.
  */
-export function usePointerLock(target: HTMLElement | null) {
+export function usePointerLock(target: HTMLElement | null, onLockLost: () => void) {
   const [isLocked, setIsLocked] = useState(false);
 
+  // Held in a ref so changing the callback does not tear down the listener.
+  const lockLostCallback = useRef(onLockLost);
+  lockLostCallback.current = onLockLost;
+
   useEffect(() => {
-    const onChange = () => setIsLocked(document.pointerLockElement === target);
+    if (!target) return;
+
+    let wasLocked = false;
+
+    const onChange = () => {
+      const locked = document.pointerLockElement === target;
+      setIsLocked(locked);
+
+      // Only a lock that existed can be lost. Without this, a browser that
+      // never grants the lock would fire the callback on the first event.
+      if (!locked && wasLocked) lockLostCallback.current();
+      wasLocked = locked;
+    };
+
     document.addEventListener('pointerlockchange', onChange);
     return () => document.removeEventListener('pointerlockchange', onChange);
   }, [target]);
 
   const requestLock = useCallback(() => {
-    // Chrome rejects a request made too soon after an exit and logs an error;
-    // catching keeps that out of the console without changing behaviour.
-    void target?.requestPointerLock?.();
+    if (!target?.requestPointerLock) return;
+
+    /* Some contexts reject the request outright: an embedded frame, a browser
+       that throttles repeated attempts, or a click the browser does not
+       consider a real gesture. That is not fatal, because only the mouse
+       depends on the lock and the keyboard does not, but the modern API
+       returns a promise and an uncaught rejection would spam the console. */
+    const request = target.requestPointerLock() as unknown;
+    if (request instanceof Promise) request.catch(() => undefined);
   }, [target]);
 
   return { isLocked, requestLock };

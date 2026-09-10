@@ -3,6 +3,7 @@ import {
   applyGravity,
   applyHorizontalAcceleration,
   damp,
+  facingAngle,
   inputToWorldDirection,
   jumpVelocity,
   moveTowards,
@@ -137,5 +138,34 @@ describe('damp', () => {
     for (let i = 0; i < 30; i++) at30 = damp(at30, 10, 8, 1 / 30);
 
     expect(at60).toBeCloseTo(at30, 5);
+  });
+});
+
+describe('facingAngle', () => {
+  it('faces forward, along -Z, at zero rotation', () => {
+    expect(facingAngle({ x: 0, z: -1 })).toBeCloseTo(0);
+  });
+
+  it('faces backwards at half a turn', () => {
+    expect(Math.abs(facingAngle({ x: 0, z: 1 }))).toBeCloseTo(Math.PI);
+  });
+
+  it('points the model where it is actually travelling', () => {
+    // Reconstruct the model's forward vector from the angle it produces and
+    // check it matches the direction of travel. This is the assertion that
+    // catches a character running backwards.
+    for (const velocity of [
+      { x: 1, z: 0 },
+      { x: -1, z: 0 },
+      { x: 0.7, z: -0.7 },
+      { x: -0.5, z: 0.5 },
+    ]) {
+      const angle = facingAngle(velocity);
+      const forward = { x: -Math.sin(angle), z: -Math.cos(angle) };
+      const length = Math.hypot(velocity.x, velocity.z);
+
+      expect(forward.x).toBeCloseTo(velocity.x / length);
+      expect(forward.z).toBeCloseTo(velocity.z / length);
+    }
   });
 });

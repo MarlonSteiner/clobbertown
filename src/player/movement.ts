@@ -114,3 +114,16 @@ export function damp(
   // change when the frame rate does.
   return target + (current - target) * Math.exp(-speed * deltaSeconds);
 }
+
+/**
+ * The Y rotation that points the character along `velocity`.
+ *
+ * The model faces -Z at rest, which is Three.js's convention for "forward".
+ * Rotating by θ about Y sends that local -Z to world (-sinθ, 0, -cosθ), so
+ * recovering θ from a direction means negating both components before the
+ * atan2. Getting this wrong points the character exactly backwards, which is
+ * why it lives here with a test rather than inline in the render loop.
+ */
+export function facingAngle(velocity: Vec2): number {
+  return Math.atan2(-velocity.x, -velocity.z);
+}
