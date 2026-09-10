@@ -23,9 +23,11 @@ const INTERACTABLES = NPCS.map((npc) => ({
 export function InteractionController({
   input,
   playerPosition,
+  paused,
 }: {
   input: RefObject<InputState>;
   playerPosition: RefObject<THREE.Vector3>;
+  paused: boolean;
 }) {
   /** Guards against a slow brain's answer arriving after the player walked off. */
   const pendingForNpcId = useRef<string | null>(null);
@@ -49,9 +51,11 @@ export function InteractionController({
     }
 
     if (!input.current.interactPressed) return;
+    // Clear the press even while paused, so a key hit behind the pause overlay
+    // is discarded rather than firing the moment play resumes.
     input.current.interactPressed = false;
 
-    if (nearbyId === null) return;
+    if (paused || nearbyId === null) return;
     void speakTo(nearbyId, player);
   });
 

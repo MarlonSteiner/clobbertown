@@ -50,7 +50,7 @@ export function Game({
             <Npc key={spec.identity.id} spec={spec} />
           ))}
 
-          <InteractionController input={input} playerPosition={playerPosition} />
+          <InteractionController input={input} playerPosition={playerPosition} paused={paused} />
         </Physics>
       </Suspense>
 
