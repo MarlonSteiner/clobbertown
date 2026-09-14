@@ -1,13 +1,17 @@
 # Clobbertown
 
+> ### 🚧 Work in progress
+>
+> This is an early prototype, not a playable game. Phase 1 of five is done:
+> you can walk around a town, jump, sprint, bump into buildings, and talk to
+> one resident. **There is no combat yet**, which is most of what the game is
+> eventually meant to be. Expect things to change, break, and get rewritten.
+
 A stylised low-poly brawler set in a small town where every resident remembers
 what you did and tells their neighbours about it.
 
 Built for the browser with Three.js, and intended to ship on Steam as a desktop
 build later.
-
-> **Status: Phase 1.** You can walk a character around a town, jump, sprint,
-> bump into buildings, and talk to one resident. There is no combat yet.
 
 ## Running it
 
@@ -49,11 +53,14 @@ npm run typecheck
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Third-person character walking around a small town | **Current** |
-| 2 | Melee combat against dummy targets | Not started |
-| 3 | LLM-driven NPCs with persistent memory, and gossip between them | Not started |
-| 4 | Electron wrapper and a Steam build pipeline via GitHub Actions | Not started |
-| 5 | Optional co-op or PvP | Not started |
+| 1 | Third-person character walking around a small town | ✅ Done |
+| 2 | Melee combat against dummy targets | ⬜ Not started |
+| 3 | LLM-driven NPCs with persistent memory, and gossip between them | ⬜ Not started |
+| 4 | Electron wrapper and a Steam build pipeline via GitHub Actions | ⬜ Not started |
+| 5 | Optional co-op or PvP | ⬜ Not started |
+
+Phase 3 is the one the whole design hangs on, and the architecture is already
+shaped around it — see the NPC interface below.
 
 ## How the code is arranged
 
