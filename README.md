@@ -1,3 +1,5 @@
+![Three boxing-gloved characters squaring up in the cobbled square of a busy medieval town](docs/banner.jpeg)
+
 # Clobbertown
 
 > ### 🚧 Work in progress
