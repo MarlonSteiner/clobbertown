@@ -2,6 +2,7 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { useAnimations } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import { isFrozen } from '../combat/hitstop';
 import { useRepairedSkin } from './repairSkin';
 import { fitToHeight, useModel } from './useModel';
 
@@ -59,13 +60,19 @@ interface CharacterModelProps {
    * state is handled.
    */
   animation: RefObject<AnimationRequest>;
+  /**
+   * Whether this character holds still during a hit freeze. True for whoever
+   * is fighting; false for bystanders, who carry on idling, which keeps the
+   * freeze about the hit rather than making the whole town stutter.
+   */
+  freezeOnHit?: boolean;
 }
 
 /** A rigged character, scaled to the height it is asked for. */
-export function CharacterModel({ model, height, animation }: CharacterModelProps) {
+export function CharacterModel({ model, height, animation, freezeOnHit = false }: CharacterModelProps) {
   const { object, size, animations } = useModel(model);
   useRepairedSkin(object);
-  const { actions } = useAnimations(animations, object);
+  const { actions, mixer } = useAnimations(animations, object);
 
   /** Identifies what is playing, so a frame with no change does nothing. */
   const playingKey = useRef<string | null>(null);
@@ -83,6 +90,8 @@ export function CharacterModel({ model, height, animation }: CharacterModelProps
   }, [actions]);
 
   useFrame(() => {
+    mixer.timeScale = freezeOnHit && isFrozen(performance.now() / 1000) ? 0 : 1;
+
     const request = animation.current;
     const oneShot = ONE_SHOT_CLIPS.has(request.clip);
     const key = oneShot ? `${request.clip}#${request.take}` : request.clip;

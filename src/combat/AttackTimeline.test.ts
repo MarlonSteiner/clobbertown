@@ -72,4 +72,27 @@ describe('AttackTimeline', () => {
     attack.tryStart(10 + COMBAT.punchCooldown, 0);
     expect(attack.count).toBe(2);
   });
+
+  it('holding a punch delays its end by exactly the hold', () => {
+    const attack = new AttackTimeline();
+    attack.tryStart(10, 0);
+    attack.hold(0.1);
+    expect(attack.isSwinging(10 + COMBAT.punchDuration + 0.05)).toBe(true);
+    expect(attack.isSwinging(10 + COMBAT.punchDuration + 0.1 + 1e-6)).toBe(false);
+  });
+
+  it('holding a punch delays the cooldown too', () => {
+    const attack = new AttackTimeline();
+    attack.tryStart(10, 0);
+    attack.hold(0.1);
+    expect(attack.tryStart(10 + COMBAT.punchCooldown + 0.05, 0)).toBe(false);
+  });
+
+  it('holding a punch that already landed does not make it land again', () => {
+    const attack = new AttackTimeline();
+    attack.tryStart(10, 0);
+    attack.consumeImpact(10 + COMBAT.punchDuration);
+    attack.hold(0.1);
+    expect(attack.consumeImpact(10 + COMBAT.punchDuration + 0.2)).toBe(false);
+  });
 });

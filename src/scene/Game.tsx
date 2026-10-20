@@ -39,9 +39,11 @@ export function Game({
 
   // Stable across renders, so the player is not handed a new callback, and
   // reads the shake ref rather than closing over a stale value.
-  const onPunchLand = useCallback((origin: THREE.Vector3, yaw: number) => {
-    resolvePunch(origin, yaw, cameraShake);
-  }, []);
+  const onPunchLand = useCallback(
+    (origin: THREE.Vector3, yaw: number, now: number) =>
+      resolvePunch(origin, yaw, cameraShake, now).length > 0,
+    [],
+  );
 
   return (
     <>

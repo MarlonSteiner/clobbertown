@@ -4,8 +4,8 @@
 
 > ### 🚧 Work in progress
 >
-> This is an early prototype, not a finished game. Phase 2 of five is under
-> way: you can walk around a town, punch training dummies, and talk to one
+> This is an early prototype, not a finished game. Phase 2 of five is done:
+> you can walk around a town, punch training dummies, and talk to one
 > resident, who notices what you have been punching. **Residents do not have
 > real memories yet**, which is the point of the whole game; that is Phase 3.
 > Expect things to change, break, and get rewritten.
@@ -58,7 +58,7 @@ npm run typecheck
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Third-person character walking around a small town | ✅ Done |
-| 2 | Melee combat against dummy targets | 🚧 In progress |
+| 2 | Melee combat against dummy targets | ✅ Done |
 | 3 | LLM-driven NPCs with persistent memory, and gossip between them | ⬜ Not started |
 | 4 | Electron wrapper and a Steam build pipeline via GitHub Actions | ⬜ Not started |
 | 5 | Optional co-op or PvP | ⬜ Not started |

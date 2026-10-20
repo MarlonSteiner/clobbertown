@@ -6,6 +6,7 @@ import { PALETTE } from '../config/palette';
 import { COMBAT } from '../config/tuning';
 import type { DummySpec } from './dummies';
 import { listenForHits } from './dummyHits';
+import { isFrozen } from './hitstop';
 import { applyHit, applyLeanToPivot, createWobble, stepWobble } from './wobble';
 
 const POST_HEIGHT = 0.9;
@@ -46,11 +47,14 @@ export function Dummy({ spec }: { spec: DummySpec }) {
   );
 
   useFrame((_, delta) => {
-    stepWobble(wobble.current, delta);
+    const now = performance.now() / 1000;
+    // Held still through the hit freeze, then released, so the dummy reads as
+    // having taken the blow before it rocks away from it.
+    if (!isFrozen(now)) stepWobble(wobble.current, delta);
 
     if (pivot.current) applyLeanToPivot(pivot.current, wobble.current, spec.facing);
 
-    const flashing = performance.now() / 1000 < flashUntil.current;
+    const flashing = now < flashUntil.current;
     for (const material of flashMaterials.current) {
       material.emissive.copy(flashing ? flashColour : black);
     }

@@ -32,7 +32,12 @@ export function Player(controls: PlayerControls) {
           own origin is at its feet, so it is dropped by half the capsule's
           height to stand on the same ground the collider rests on. */}
       <group ref={model} position={[0, -CHARACTER_HEIGHT / 2, 0]}>
-        <CharacterModel model={PLAYER_MODEL} height={CHARACTER_HEIGHT} animation={animation} />
+        <CharacterModel
+          model={PLAYER_MODEL}
+          height={CHARACTER_HEIGHT}
+          animation={animation}
+          freezeOnHit
+        />
       </group>
     </RigidBody>
   );

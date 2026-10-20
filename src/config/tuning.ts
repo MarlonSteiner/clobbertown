@@ -163,6 +163,14 @@ export const COMBAT = {
   /** How long a hit dummy flashes, in seconds. */
   dummyFlashSeconds: 0.12,
 
+  /**
+   * How long everything involved in a hit freezes when a punch connects. The
+   * single biggest contributor to a hit feeling heavy: the eye registers the
+   * impact during the hold. Around 50 to 100ms reads as a solid hit; much
+   * longer starts to feel like the game stuttered.
+   */
+  hitstopSeconds: 0.07,
+
   /** Strength of the camera shake on a landed punch, in metres of offset. */
   cameraShakeStrength: 0.12,
   /** How quickly the shake settles. Higher is a sharper, shorter jolt. */

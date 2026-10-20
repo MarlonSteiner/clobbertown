@@ -49,6 +49,18 @@ export class AttackTimeline {
     return true;
   }
 
+  /**
+   * Pauses the punch for `seconds`, as if no time had passed.
+   *
+   * Called for the hit freeze. Without it, the punch's clock would keep
+   * running while its animation stood still, and the end of the swing would be
+   * cut short by however long the freeze lasted. Shifting the start moves the
+   * end of the swing and the cooldown back together.
+   */
+  hold(seconds: number): void {
+    this.startedAt += seconds;
+  }
+
   /** Direction the current punch was thrown in. */
   get yaw(): number {
     return this.swingYaw;

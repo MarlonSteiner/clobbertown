@@ -4,6 +4,7 @@ import type { RapierCollider, RapierRigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
 import { handleAttackInput } from '../combat/attackInput';
 import { AttackTimeline } from '../combat/AttackTimeline';
+import { isFrozen } from '../combat/hitstop';
 import { COMBAT, PLAYER } from '../config/tuning';
 import type { InputState } from '../input/InputState';
 import type { LookState } from '../input/useMouseLook';
@@ -35,9 +36,9 @@ export interface PlayerControls {
   /**
    * Called once per punch, on the frame the fist connects, with where the
    * player stands and the direction the punch was thrown. What it hit and who
-   * saw it is decided elsewhere; the player only knows that it swung.
+   * saw it is decided elsewhere; the player only learns whether it connected.
    */
-  onPunchLand: (origin: THREE.Vector3, yaw: number) => void;
+  onPunchLand: (origin: THREE.Vector3, yaw: number, now: number) => boolean;
 }
 
 /**
@@ -94,6 +95,11 @@ export function usePlayerController({
     // integrate one enormous step and punch the player through the world.
     const delta = Math.min(rawDelta, MAX_DELTA);
     const now = performance.now() / 1000;
+
+    // Hit freeze: hold exactly where we are. Velocity is untouched, so the
+    // player carries on at the same speed when it lifts, and presses made
+    // during it are kept, because previousFrameAt does not advance.
+    if (isFrozen(now)) return;
 
     const state = input.current;
     const grounded = controller.computedGrounded();
@@ -168,7 +174,12 @@ export function usePlayerController({
       swinging ? attack.current.yaw : null,
     );
 
-    if (attack.current.consumeImpact(now)) onPunchLand(nextPosition.current, attack.current.yaw);
+    const landed = attack.current.consumeImpact(now);
+    if (landed && onPunchLand(nextPosition.current, attack.current.yaw, now)) {
+      // The punch's own clock pauses for the freeze, or the end of the swing
+      // would be cut short by however long the freeze lasted.
+      attack.current.hold(COMBAT.hitstopSeconds);
+    }
 
     // Mutated in place: this runs every frame, and a fresh object each time
     // is garbage the collector has to clean up mid-game.

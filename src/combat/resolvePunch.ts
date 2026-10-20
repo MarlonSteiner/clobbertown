@@ -3,6 +3,7 @@ import { COMBAT } from '../config/tuning';
 import { getNpcBrain, NPCS } from '../npc/roster';
 import { DUMMY_TARGETS } from './dummies';
 import { reportHit } from './dummyHits';
+import { triggerHitstop } from './hitstop';
 import { findPunchTargets } from './reach';
 import { findWitnesses } from './witnesses';
 
@@ -23,6 +24,7 @@ export function resolvePunch(
   origin: { x: number; y: number; z: number },
   yaw: number,
   cameraShake: RefObject<number>,
+  now: number,
 ): string[] {
   const struck = findPunchTargets(origin, yaw, DUMMY_TARGETS);
   // A punch at thin air does nothing: no shake, no flinch. Feedback that
@@ -35,6 +37,7 @@ export function resolvePunch(
     reportHit(id, directionFrom(origin, target.position, yaw));
   }
 
+  triggerHitstop(now);
   cameraShake.current = COMBAT.cameraShakeStrength;
   tellWitnesses(origin, struck);
   return struck;
