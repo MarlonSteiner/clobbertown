@@ -87,9 +87,65 @@ kbd {
   font-weight: 700;
 }
 
-.hint {
-  margin-top: 20px;
+/* While loading, the whole overlay says "not yet": a waiting cursor, and no
+   hover response, so a click that cannot do anything does not look as if it
+   should have. */
+.start-screen[data-state='loading'] {
+  cursor: progress;
+}
+
+.cta {
+  margin-top: 22px;
   font-weight: 700;
+  font-size: 17px;
+}
+
+.cta-ready {
+  display: inline-block;
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--parchment);
+  transition: transform 120ms ease;
+}
+
+.start-screen:hover .cta-ready {
+  transform: scale(1.05);
+}
+
+.cta-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0.6;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--parchment-edge);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pausing is usually an accident (Esc, or clicking another window), so the
+   badge has to be impossible to mistake for the start screen's tagline. */
+.start-card p.paused-badge {
+  display: inline-block;
+  margin-bottom: 18px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: #e8a33d;
+  color: var(--ink);
+  font-weight: 700;
+  opacity: 1;
 }
 
 /* The interact prompt sits just under the centre of the screen, where the

@@ -10,6 +10,16 @@
  * is a browser behaviour that cannot be intercepted, and a game that keeps
  * running while the mouse is free feels broken.
  */
+/**
+ * Which of its three jobs the overlay is doing.
+ *
+ * They must look different from one another. When they did not, a player
+ * who clicked during loading saw nothing happen, and a player who had paused
+ * by accident saw what looked like the start screen again; both read as the
+ * controls being broken.
+ */
+type OverlayState = 'loading' | 'ready' | 'paused';
+
 export function StartScreen({
   onStart,
   hasPlayed,
@@ -19,13 +29,23 @@ export function StartScreen({
   hasPlayed: boolean;
   isReady: boolean;
 }) {
+  const state: OverlayState = !isReady ? 'loading' : hasPlayed ? 'paused' : 'ready';
+
   return (
     // Clicking before the world exists would drop the player into an empty
     // sky, so the overlay stays put until physics is live.
-    <div className="start-screen" onClick={isReady ? onStart : undefined}>
+    <div
+      className="start-screen"
+      data-state={state}
+      onClick={state === 'loading' ? undefined : onStart}
+    >
       <div className="start-card">
         <h1>Clobbertown</h1>
-        <p>{hasPlayed ? 'Paused' : 'A small town with a long memory.'}</p>
+        {state === 'paused' ? (
+          <p className="paused-badge">⏸ Paused</p>
+        ) : (
+          <p>A small town with a long memory.</p>
+        )}
 
         <div className="controls">
           <span>
@@ -52,10 +72,25 @@ export function StartScreen({
           <span>Release the mouse</span>
         </div>
 
-        <p className="hint">
-          {!isReady ? 'Building the town…' : hasPlayed ? 'Click to resume' : 'Click to play'}
-        </p>
+        <CallToAction state={state} />
       </div>
+    </div>
+  );
+}
+
+function CallToAction({ state }: { state: OverlayState }) {
+  if (state === 'loading') {
+    return (
+      <div className="cta cta-loading" role="status">
+        <span className="spinner" aria-hidden="true" />
+        Building the town…
+      </div>
+    );
+  }
+
+  return (
+    <div className="cta cta-ready">
+      {state === 'paused' ? '▶ Click to resume' : '▶ Click to play'}
     </div>
   );
 }
