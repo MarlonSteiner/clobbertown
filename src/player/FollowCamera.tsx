@@ -1,12 +1,17 @@
 import { useRef, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { CAMERA } from '../config/tuning';
+import { CAMERA, COMBAT } from '../config/tuning';
 import type { LookState } from '../input/useMouseLook';
 
 interface FollowCameraProps {
   target: RefObject<THREE.Vector3>;
   look: RefObject<LookState>;
+  /**
+   * Current shake strength, in metres. Set by a landed punch and decayed here,
+   * so whoever triggers a shake does not have to manage its lifetime.
+   */
+  shake: RefObject<number>;
 }
 
 /**
@@ -21,7 +26,7 @@ interface FollowCameraProps {
  * swings to where you are looking a beat before it catches up to where you
  * are standing, which is what makes turning feel led rather than dragged.
  */
-export function FollowCamera({ target, look }: FollowCameraProps) {
+export function FollowCamera({ target, look, shake }: FollowCameraProps) {
   const camera = useThree((state) => state.camera);
 
   const smoothedTarget = useRef(new THREE.Vector3());
@@ -65,6 +70,17 @@ export function FollowCamera({ target, look }: FollowCameraProps) {
 
     camera.position.copy(smoothedPosition.current);
     camera.lookAt(smoothedTarget.current);
+
+    // Shake is applied after aiming, as an offset on top of the smoothed
+    // position, never fed back into it. Mixing it into the smoothing would
+    // leave the camera drifting off its rest point after every hit.
+    if (shake.current > 0.001) {
+      camera.position.x += (Math.random() * 2 - 1) * shake.current;
+      camera.position.y += (Math.random() * 2 - 1) * shake.current;
+      shake.current *= Math.exp(-COMBAT.cameraShakeDecay * delta);
+    } else {
+      shake.current = 0;
+    }
   });
 
   return null;

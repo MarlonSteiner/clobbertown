@@ -20,6 +20,11 @@ export interface InputState {
   jumpRequestedAt: number | null;
   /** Set on the frame the interact key goes down; cleared once handled. */
   interactPressed: boolean;
+  /**
+   * When a punch was last requested, or null. Buffered like jump, so a punch
+   * pressed just before the previous one finishes is queued rather than lost.
+   */
+  attackRequestedAt: number | null;
 }
 
 export function createInputState(): InputState {
@@ -29,6 +34,7 @@ export function createInputState(): InputState {
     sprint: false,
     jumpRequestedAt: null,
     interactPressed: false,
+    attackRequestedAt: null,
   };
 }
 
@@ -46,4 +52,9 @@ export const BINDINGS = {
   jump: ['Space'],
   sprint: ['ShiftLeft', 'ShiftRight'],
   interact: ['KeyE'],
+  /**
+   * The keyboard punch. Left click is the main one, but pointer lock is not
+   * guaranteed and some players prefer to keep both hands on the keys.
+   */
+  attack: ['KeyF'],
 } as const;

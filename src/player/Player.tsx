@@ -2,10 +2,14 @@ import { useRef, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { CapsuleCollider, RigidBody, type RapierCollider, type RapierRigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
-import { PLAYER } from '../config/tuning';
+import { handleAttackInput } from '../combat/attackInput';
+import { AttackTimeline } from '../combat/AttackTimeline';
+import { COMBAT, PLAYER } from '../config/tuning';
 import type { InputState } from '../input/InputState';
 import type { LookState } from '../input/useMouseLook';
-import { CharacterModel, type CharacterAnimation } from '../scene/CharacterModel';
+import { CharacterModel, type AnimationRequest } from '../scene/CharacterModel';
+import { updateFacing } from './facing';
+import { shouldJump } from './jumpInput';
 import { chooseAnimation } from './playerAnimation';
 import { PLAYER_MODEL } from './playerModel';
 import { SPAWN } from './spawn';
@@ -13,11 +17,9 @@ import { useCharacterController } from './useCharacterController';
 import {
   applyGravity,
   applyHorizontalAcceleration,
-  damp,
   facingAngle,
   inputToWorldDirection,
   jumpVelocity,
-  shortestAngleDelta,
   type Vec2,
 } from './movement';
 
@@ -34,6 +36,12 @@ interface PlayerProps {
   positionOut: RefObject<THREE.Vector3>;
   /** True while the game is not accepting input, e.g. the pointer is unlocked. */
   paused: boolean;
+  /**
+   * Called once per punch, on the frame the fist connects, with where the
+   * player stands and the direction the punch was thrown. What it hit and who
+   * saw it is decided elsewhere; the player only knows that it swung.
+   */
+  onPunchLand: (origin: THREE.Vector3, yaw: number) => void;
 }
 
 /**
@@ -44,7 +52,7 @@ interface PlayerProps {
  * re-render the scene every frame, and storing it on the rigid body is not
  * possible for a kinematic one, which has no velocity of its own.
  */
-export function Player({ input, look, positionOut, paused }: PlayerProps) {
+export function Player({ input, look, positionOut, paused, onPunchLand }: PlayerProps) {
   const body = useRef<RapierRigidBody>(null);
   const collider = useRef<RapierCollider>(null);
   const model = useRef<THREE.Group>(null);
@@ -57,7 +65,14 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
   /** The direction the model is facing, eased towards the direction of travel. */
   const facing = useRef(0);
   /** Which clip the model should be playing. Read by CharacterModel each frame. */
-  const animation = useRef<CharacterAnimation>('Idle');
+  const animation = useRef<AnimationRequest>({
+    clip: 'Idle',
+    take: 0,
+    duration: COMBAT.punchDuration,
+  });
+  const attack = useRef(new AttackTimeline());
+  /** When the last frame ran. Buffered presses are aged from here; see input/buffer.ts. */
+  const previousFrameAt = useRef(-Infinity);
 
   // Scratch objects, reused each frame. Allocating vectors inside useFrame is
   // the most reliable way to give a game a stuttering garbage collector.
@@ -84,7 +99,18 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
     const right = paused ? 0 : state.right;
 
     const direction = inputToWorldDirection(forward, right, look.current.yaw);
-    const topSpeed = !paused && state.sprint ? PLAYER.sprintSpeed : PLAYER.walkSpeed;
+
+    // Punch where the player is pressing if they are moving, otherwise where
+    // the character already faces. Brawler convention: it needs no mouse, and
+    // walking at a target then punching simply works.
+    const hasInput = direction.x !== 0 || direction.z !== 0;
+    const punchYaw = hasInput ? facingAngle(direction) : facing.current;
+    handleAttackInput(state, attack.current, now, previousFrameAt.current, punchYaw, paused);
+    const swinging = attack.current.isSwinging(now);
+
+    const baseSpeed = !paused && state.sprint ? PLAYER.sprintSpeed : PLAYER.walkSpeed;
+    // Slowed mid-punch, so the feet plant and the swing reads as committed.
+    const topSpeed = swinging ? baseSpeed * COMBAT.punchMoveFactor : baseSpeed;
 
     horizontalVelocity.current = applyHorizontalAcceleration(
       horizontalVelocity.current,
@@ -100,20 +126,10 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
       ? -1
       : applyGravity(verticalVelocity.current, delta);
 
-    if (!paused) {
-      const canJump = now - lastGroundedAt.current <= PLAYER.coyoteTimeSeconds;
-      const requestedAt = state.jumpRequestedAt;
-      const jumpIsFresh = requestedAt !== null && now - requestedAt <= PLAYER.jumpBufferSeconds;
-
-      if (jumpIsFresh && canJump) {
-        verticalVelocity.current = jumpVelocity();
-        state.jumpRequestedAt = null;
-        // Prevents coyote time from granting a second jump on the way up.
-        lastGroundedAt.current = -Infinity;
-      } else if (requestedAt !== null && now - requestedAt > PLAYER.jumpBufferSeconds) {
-        // The buffer expired without ever finding ground; drop the request.
-        state.jumpRequestedAt = null;
-      }
+    if (shouldJump(state, now, previousFrameAt.current, lastGroundedAt.current, paused)) {
+      verticalVelocity.current = jumpVelocity();
+      // Prevents coyote time from granting a second jump on the way up.
+      lastGroundedAt.current = -Infinity;
     }
 
     desiredMovement.current.set(
@@ -143,10 +159,23 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
     }
 
     positionOut.current.copy(nextPosition.current);
-    updateFacing(model.current, horizontalVelocity.current, facing, delta);
+    updateFacing(
+      model.current,
+      horizontalVelocity.current,
+      facing,
+      delta,
+      swinging ? attack.current.yaw : null,
+    );
 
+    if (attack.current.consumeImpact(now)) onPunchLand(nextPosition.current, attack.current.yaw);
+
+    // Mutated in place: this runs every frame, and a fresh object each time
+    // is garbage the collector has to clean up mid-game.
     const speed = Math.hypot(horizontalVelocity.current.x, horizontalVelocity.current.z);
-    animation.current = chooseAnimation(speed, grounded);
+    animation.current.clip = chooseAnimation(speed, grounded, swinging);
+    animation.current.take = attack.current.count;
+
+    previousFrameAt.current = now;
   });
 
   return (
@@ -168,31 +197,4 @@ export function Player({ input, look, positionOut, paused }: PlayerProps) {
       </group>
     </RigidBody>
   );
-}
-
-/**
- * Turns the model to face where it is going.
- *
- * The model is rotated independently of the collider, so the capsule's
- * physics never depend on which way the character is looking. Below a small
- * speed the facing is left alone, otherwise the character spins on the spot
- * chasing the noise in a near-zero velocity.
- */
-function updateFacing(
-  model: THREE.Group | null,
-  velocity: Vec2,
-  facing: RefObject<number>,
-  delta: number,
-): void {
-  if (!model) return;
-
-  const speed = Math.hypot(velocity.x, velocity.z);
-  if (speed > PLAYER.idleSpeedThreshold) {
-    // Ease along the shortest arc, so crossing due south does not spin the
-    // character the long way round.
-    const turn = shortestAngleDelta(facing.current, facingAngle(velocity));
-    facing.current = damp(facing.current, facing.current + turn, PLAYER.turnSpeed, delta);
-  }
-
-  model.rotation.y = facing.current;
 }

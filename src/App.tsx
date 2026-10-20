@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { CAMERA } from './config/tuning';
+import { useAttackClick } from './input/useAttackClick';
 import { useKeyboard } from './input/useKeyboard';
 import { useMouseLook } from './input/useMouseLook';
 import { usePointerLock } from './input/usePointerLock';
@@ -35,6 +36,7 @@ export function App() {
 
   const input = useKeyboard();
   const look = useMouseLook(canvas);
+  useAttackClick(canvas, input);
 
   const pause = useCallback(() => setIsPlaying(false), []);
   const { requestLock } = usePointerLock(canvas, pause);

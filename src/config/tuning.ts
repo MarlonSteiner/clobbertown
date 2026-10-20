@@ -117,3 +117,60 @@ export const INTERACTION = {
    */
   rangeHysteresis: 0.75,
 } as const;
+
+export const COMBAT = {
+  /**
+   * How long a punch takes from wind-up to recovery. The source animation is
+   * 0.75s, which feels sluggish in a brawler, so it is played faster to fit.
+   */
+  punchDuration: 0.42,
+  /**
+   * When the fist connects, as a fraction of the punch. Hits are resolved on
+   * this one frame rather than across the whole swing, so a punch can only
+   * land once and the hit lines up with the arm being extended.
+   */
+  punchImpactAt: 0.45,
+  /**
+   * Minimum time between punches. Slightly longer than the punch itself, so
+   * mashing the button produces a rhythm rather than a blur.
+   */
+  punchCooldown: 0.5,
+  /** A punch pressed this long before the last one ends is queued, not dropped. */
+  punchBufferSeconds: 0.2,
+  /** Movement speed while swinging, as a fraction of normal. Plants the feet. */
+  punchMoveFactor: 0.3,
+
+  /**
+   * How far a punch reaches, measured between the centres of the puncher and
+   * the target. Generous on purpose: a punch that visibly touches and does not
+   * count feels worse than one that counts from a hair too far away.
+   */
+  punchReach: 1.7,
+  /**
+   * Half-width of the cone a punch covers, in radians either side of where the
+   * player is facing. Wide enough that you do not have to aim precisely.
+   */
+  punchArc: 1.0,
+
+  /** How hard a hit shoves a dummy, in radians per second of tilt. */
+  dummyHitImpulse: 5.5,
+  /** Spring stiffness pulling a dummy upright. Higher wobbles faster. */
+  dummyStiffness: 70,
+  /** How quickly the wobble dies away. Lower lets it rock for longer. */
+  dummyDamping: 5,
+  /** Furthest a dummy can lean, so a flurry of hits cannot fold it flat. */
+  dummyMaxTilt: 0.75,
+  /** How long a hit dummy flashes, in seconds. */
+  dummyFlashSeconds: 0.12,
+
+  /** Strength of the camera shake on a landed punch, in metres of offset. */
+  cameraShakeStrength: 0.12,
+  /** How quickly the shake settles. Higher is a sharper, shorter jolt. */
+  cameraShakeDecay: 14,
+
+  /**
+   * How far away a resident can be and still see a punch land. Distance only
+   * for now; Phase 3 will want line of sight, so a wall blocks a witness.
+   */
+  witnessRange: 18,
+} as const;

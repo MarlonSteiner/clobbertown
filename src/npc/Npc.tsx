@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { CapsuleCollider, RigidBody } from '@react-three/rapier';
 import { PALETTE } from '../config/palette';
 import { PLAYER } from '../config/tuning';
-import { CharacterModel, type CharacterAnimation } from '../scene/CharacterModel';
+import { CharacterModel, type AnimationRequest } from '../scene/CharacterModel';
 import { useGameStore } from '../state/useGameStore';
 import type { NpcSpec } from './roster';
 
@@ -20,7 +20,7 @@ export function Npc({ spec }: { spec: NpcSpec }) {
 
   // Constant for now, but typed as a ref so that giving NPCs a walk cycle in
   // Phase 3 needs no change on this side of the interface.
-  const animation = useRef<CharacterAnimation>('Idle');
+  const animation = useRef<AnimationRequest>({ clip: 'Idle', take: 0 });
 
   const height = PLAYER.modelHeight;
 

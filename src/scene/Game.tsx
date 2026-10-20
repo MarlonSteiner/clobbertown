@@ -1,6 +1,9 @@
-import { Suspense, useRef, type RefObject } from 'react';
+import { Suspense, useCallback, useRef, type RefObject } from 'react';
 import { Physics } from '@react-three/rapier';
 import * as THREE from 'three';
+import { Dummy } from '../combat/Dummy';
+import { DUMMIES } from '../combat/dummies';
+import { resolvePunch } from '../combat/resolvePunch';
 import { WORLD } from '../config/tuning';
 import { InteractionController } from '../interaction/InteractionController';
 import type { InputState } from '../input/InputState';
@@ -32,6 +35,13 @@ export function Game({
   paused: boolean;
 }) {
   const playerPosition = useRef(new THREE.Vector3());
+  const cameraShake = useRef(0);
+
+  // Stable across renders, so the player is not handed a new callback, and
+  // reads the shake ref rather than closing over a stale value.
+  const onPunchLand = useCallback((origin: THREE.Vector3, yaw: number) => {
+    resolvePunch(origin, yaw, cameraShake);
+  }, []);
 
   return (
     <>
@@ -45,7 +55,17 @@ export function Game({
           <WorldReady />
           <Town />
 
-          <Player input={input} look={look} positionOut={playerPosition} paused={paused} />
+          <Player
+            input={input}
+            look={look}
+            positionOut={playerPosition}
+            paused={paused}
+            onPunchLand={onPunchLand}
+          />
+
+          {DUMMIES.map((spec) => (
+            <Dummy key={spec.id} spec={spec} />
+          ))}
 
           {NPCS.map((spec) => (
             <Npc key={spec.identity.id} spec={spec} />
@@ -56,7 +76,7 @@ export function Game({
       </Suspense>
 
       {/* Outside Physics: the camera is not a physical object, it just watches one. */}
-      <FollowCamera target={playerPosition} look={look} />
+      <FollowCamera target={playerPosition} look={look} shake={cameraShake} />
     </>
   );
 }

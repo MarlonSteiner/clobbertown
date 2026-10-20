@@ -63,6 +63,10 @@ export function StartScreen({
           </span>
           <span>Jump</span>
           <span>
+            Click / <kbd>F</kbd>
+          </span>
+          <span>Punch</span>
+          <span>
             <kbd>E</kbd>
           </span>
           <span>Talk to a resident</span>

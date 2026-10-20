@@ -29,4 +29,11 @@ export const PALETTE = {
   playerAccent: '#f2e2c4',
   npc: '#d4674f',
   npcAccent: '#6b4f3a',
+
+  /** Training dummies: a burlap sack on a wooden post, with a painted target. */
+  burlap: '#c9a46a',
+  post: '#7a5a3c',
+  target: '#c4473a',
+  /** What a dummy flashes on a hit. Bright, so the hit registers at a glance. */
+  hitFlash: '#fff4d6',
 } as const;

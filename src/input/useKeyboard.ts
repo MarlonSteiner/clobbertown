@@ -35,6 +35,9 @@ export function useKeyboard(): React.RefObject<InputState> {
       if ((BINDINGS.interact as readonly string[]).includes(event.code)) {
         input.current.interactPressed = true;
       }
+      if ((BINDINGS.attack as readonly string[]).includes(event.code)) {
+        input.current.attackRequestedAt = performance.now() / 1000;
+      }
       recomputeAxes();
     };
 
