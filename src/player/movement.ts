@@ -127,3 +127,16 @@ export function damp(
 export function facingAngle(velocity: Vec2): number {
   return Math.atan2(-velocity.x, -velocity.z);
 }
+
+/**
+ * The yaw that turns something standing at `from` to face `to`.
+ *
+ * For placing things in the world. Hand-typed angles are easy to get backwards
+ * and impossible to check by reading; this says what it means.
+ */
+export function yawToward(
+  from: readonly [x: number, z: number],
+  to: readonly [x: number, z: number],
+): number {
+  return facingAngle({ x: to[0] - from[0], z: to[1] - from[1] });
+}

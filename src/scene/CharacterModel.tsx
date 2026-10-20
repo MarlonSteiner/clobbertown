@@ -82,7 +82,14 @@ export function CharacterModel({ model, height, animation }: CharacterModelProps
     currentClip.current = wanted;
   });
 
-  return <primitive object={object} scale={scale} />;
+  return (
+    // glTF models face +Z, but this game's convention is that forward is -Z,
+    // which is what the camera, movement and punch maths all assume. Turning
+    // the model round once here keeps that conversion out of everything else.
+    <group rotation={[0, Math.PI, 0]}>
+      <primitive object={object} scale={scale} />
+    </group>
+  );
 }
 
 /**

@@ -1,4 +1,6 @@
 import type { NpcBrain, NpcIdentity } from './NpcBrain';
+import { yawToward } from '../player/movement';
+import { SPAWN } from '../player/spawn';
 import { StubNpcBrain } from './StubNpcBrain';
 
 /** An NPC as the scene needs it: who they are, where they stand, and their mind. */
@@ -18,6 +20,8 @@ export interface NpcSpec {
  * Brains are created here and nowhere else. That makes this file the single
  * place Phase 3 edits to swap `StubNpcBrain` for the real implementation.
  */
+const GERTIE_AT: [x: number, z: number] = [4, 3];
+
 export const NPCS: NpcSpec[] = [
   {
     identity: {
@@ -28,8 +32,10 @@ export const NPCS: NpcSpec[] = [
     // A chef, because she runs the bakery. Phase 3 will want the role and the
     // look to agree, since the LLM is told what she does for a living.
     model: 'characters/chef-female.glb',
-    position: [4, 3],
-    facing: -2.4,
+    position: GERTIE_AT,
+    // Facing where the player starts, so the first thing they see of her is
+    // her face and not her back.
+    facing: yawToward(GERTIE_AT, [SPAWN[0], SPAWN[2]]),
   },
 ];
 

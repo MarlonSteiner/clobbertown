@@ -8,6 +8,7 @@ import type { LookState } from '../input/useMouseLook';
 import { CharacterModel, type CharacterAnimation } from '../scene/CharacterModel';
 import { chooseAnimation } from './playerAnimation';
 import { PLAYER_MODEL } from './playerModel';
+import { SPAWN } from './spawn';
 import { useCharacterController } from './useCharacterController';
 import {
   applyGravity,
@@ -23,8 +24,6 @@ import {
 /** How tall the player stands, matched to the collider. */
 const CHARACTER_HEIGHT = PLAYER.modelHeight;
 
-/** Where the player starts: on the square, a little south of centre. */
-const SPAWN: [number, number, number] = [0, 2, 8];
 /** Longest frame the simulation will accept, so a stall cannot teleport the player. */
 const MAX_DELTA = 1 / 20;
 

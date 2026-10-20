@@ -4,6 +4,7 @@ import {
   applyHorizontalAcceleration,
   damp,
   facingAngle,
+  yawToward,
   inputToWorldDirection,
   jumpVelocity,
   moveTowards,
@@ -167,5 +168,18 @@ describe('facingAngle', () => {
       expect(forward.x).toBeCloseTo(velocity.x / length);
       expect(forward.z).toBeCloseTo(velocity.z / length);
     }
+  });
+});
+
+describe('yawToward', () => {
+  it('points straight down -Z at a target directly ahead', () => {
+    expect(yawToward([0, 0], [0, -5])).toBeCloseTo(0);
+  });
+
+  it('turns to face a target off to one side', () => {
+    const yaw = yawToward([2, 3], [7, 3]);
+    // Forward at this yaw should point along +X.
+    expect(-Math.sin(yaw)).toBeCloseTo(1);
+    expect(-Math.cos(yaw)).toBeCloseTo(0);
   });
 });
