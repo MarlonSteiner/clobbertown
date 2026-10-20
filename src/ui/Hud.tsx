@@ -29,7 +29,7 @@ export function Hud() {
 
       <DialogueBox utterance={dialogue} isPending={isPending} speakerId={nearbyNpcId} />
 
-      <div className="corner-hint">Phase 1 · walk, jump, and talk</div>
+      <div className="corner-hint">Phase 2 · punch a dummy, then see what Gertie says</div>
     </div>
   );
 }

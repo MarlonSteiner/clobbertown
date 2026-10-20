@@ -4,10 +4,11 @@
 
 > ### 🚧 Work in progress
 >
-> This is an early prototype, not a playable game. Phase 1 of five is done:
-> you can walk around a town, jump, sprint, bump into buildings, and talk to
-> one resident. **There is no combat yet**, which is most of what the game is
-> eventually meant to be. Expect things to change, break, and get rewritten.
+> This is an early prototype, not a finished game. Phase 2 of five is under
+> way: you can walk around a town, punch training dummies, and talk to one
+> resident, who notices what you have been punching. **Residents do not have
+> real memories yet**, which is the point of the whole game; that is Phase 3.
+> Expect things to change, break, and get rewritten.
 
 A stylised low-poly brawler set in a small town where every resident remembers
 what you did and tells their neighbours about it.
@@ -32,6 +33,7 @@ Then open the URL Vite prints, click to play, and use:
 | Mouse | Look around |
 | `Shift` | Sprint |
 | `Space` | Jump |
+| Click / `F` | Punch |
 | `E` | Talk to a resident |
 | `Esc` | Release the mouse and pause |
 
@@ -56,7 +58,7 @@ npm run typecheck
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Third-person character walking around a small town | ✅ Done |
-| 2 | Melee combat against dummy targets | ⬜ Not started |
+| 2 | Melee combat against dummy targets | 🚧 In progress |
 | 3 | LLM-driven NPCs with persistent memory, and gossip between them | ⬜ Not started |
 | 4 | Electron wrapper and a Steam build pipeline via GitHub Actions | ⬜ Not started |
 | 5 | Optional co-op or PvP | ⬜ Not started |
@@ -93,9 +95,10 @@ everything. Two details exist purely to protect the eventual swap:
 - `converse()` returns a `Promise` even though the stub could answer
   synchronously, because a real brain is a network round-trip and a synchronous
   signature would mean rewriting every call site later.
-- `observe()` exists with no consumer, because it is how Phase 2's combat will
-  report what the player did, and how Phase 3's NPCs will gossip. Without it,
-  memory has no way in.
+- `observe()` is how the town learns what the player did. Phase 2 is its first
+  real use: every landed punch is reported to each resident close enough to
+  see it, with the full list of who else saw, which is what Phase 3's gossip
+  will spread. Without it, memory has no way in.
 
 **Per-frame state stays out of React.** Input, velocity, player position and
 the current animation clip all live in refs, and the Zustand store only holds

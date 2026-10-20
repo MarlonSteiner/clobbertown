@@ -11,9 +11,9 @@
  * 1. `converse` returns a Promise even though the stub could answer
  *    synchronously. A real brain is a network round-trip, and a synchronous
  *    signature today would mean rewriting every call site tomorrow.
- * 2. `observe` exists with no consumer yet. It is how Phase 2's combat tells
- *    the town what the player did, and Phase 3's gossip is built by NPCs
- *    observing each other. Without it, memory has no way in.
+ * 2. `observe` is how the town learns what the player did. Phase 2's punches
+ *    are its first real use, and Phase 3's gossip is built by NPCs observing
+ *    each other through the same call. Without it, memory has no way in.
  */
 
 /** Who an NPC is. Static facts, not state. */
@@ -31,7 +31,9 @@ export type NpcMood = 'neutral' | 'friendly' | 'wary' | 'hostile';
 export type ObservationKind =
   | 'player-approached'
   | 'player-spoke'
-  | 'player-left';
+  | 'player-left'
+  /** The player landed a punch on something. `targetId` says what. */
+  | 'player-attacked';
 
 /**
  * Something that happened, reported to an NPC so it can be remembered.
@@ -47,6 +49,12 @@ export interface WorldObservation {
   position: { x: number; y: number; z: number };
   /** Ids of NPCs who could see it. Empty means unobserved. */
   witnessedBy: string[];
+  /**
+   * Who or what the event was done to, when it was done to something. A
+   * resident will care a great deal whether the player hit a training dummy
+   * or their neighbour, so the distinction is recorded from the start.
+   */
+  targetId?: string;
 }
 
 /** What the player brings to a conversation. */

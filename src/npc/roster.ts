@@ -52,7 +52,7 @@ export function getNpcBrain(npcId: string): NpcBrain {
   const existing = brains.get(npcId);
   if (existing) return existing;
 
-  const brain = new StubNpcBrain(STUB_LINES[npcId] ?? DEFAULT_LINES);
+  const brain = new StubNpcBrain(STUB_LINES[npcId] ?? DEFAULT_LINES, STUB_REACTIONS[npcId] ?? []);
   brains.set(npcId, brain);
   return brain;
 }
@@ -69,5 +69,18 @@ const STUB_LINES: Record<string, readonly string[]> = {
     "Morning. You're new, aren't you? Don't worry, everyone'll know by lunchtime.",
     "Careful round the square. People here have long memories.",
     "I'd tell you what the smith said about you, but I'm not one to gossip.",
+  ],
+};
+
+/**
+ * What a resident says after watching the player hit something. The first line
+ * is for the first time; the last repeats for every time after, which is about
+ * how patient Gertie is.
+ */
+const STUB_REACTIONS: Record<string, readonly string[]> = {
+  gertie: [
+    "I saw that. What did that dummy ever do to you?",
+    "Again? You'll have the whole square talking by supper.",
+    "Keep that up and nobody in this town will sell you so much as a bun.",
   ],
 };

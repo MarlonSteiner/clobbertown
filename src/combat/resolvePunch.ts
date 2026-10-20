@@ -1,8 +1,16 @@
 import type { RefObject } from 'react';
 import { COMBAT } from '../config/tuning';
+import { getNpcBrain, NPCS } from '../npc/roster';
 import { DUMMY_TARGETS } from './dummies';
 import { reportHit } from './dummyHits';
 import { findPunchTargets } from './reach';
+import { findWitnesses } from './witnesses';
+
+/** The residents in the flat shape the witness check wants, computed once. */
+const RESIDENTS = NPCS.map((npc) => ({
+  id: npc.identity.id,
+  position: { x: npc.position[0], z: npc.position[1] },
+}));
 
 /**
  * Works out what a landed punch did, and tells everything that cares.
@@ -12,7 +20,7 @@ import { findPunchTargets } from './reach';
  * the ids of whatever was struck.
  */
 export function resolvePunch(
-  origin: { x: number; z: number },
+  origin: { x: number; y: number; z: number },
   yaw: number,
   cameraShake: RefObject<number>,
 ): string[] {
@@ -28,7 +36,35 @@ export function resolvePunch(
   }
 
   cameraShake.current = COMBAT.cameraShakeStrength;
+  tellWitnesses(origin, struck);
   return struck;
+}
+
+/**
+ * Reports each hit to every resident close enough to have seen it.
+ *
+ * This is the first thing in the game that feeds an NPC's memory. One
+ * observation per thing struck, carrying the full witness list, because
+ * Phase 3's gossip needs to know who else saw it as well as that it happened.
+ */
+function tellWitnesses(origin: { x: number; y: number; z: number }, struck: readonly string[]): void {
+  const witnesses = findWitnesses(origin, RESIDENTS);
+  if (witnesses.length === 0) return;
+
+  const at = Date.now();
+  const position = { x: origin.x, y: origin.y, z: origin.z };
+
+  for (const targetId of struck) {
+    for (const witness of witnesses) {
+      getNpcBrain(witness).observe({
+        kind: 'player-attacked',
+        at,
+        position,
+        witnessedBy: witnesses,
+        targetId,
+      });
+    }
+  }
 }
 
 /**

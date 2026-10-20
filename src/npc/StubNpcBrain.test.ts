@@ -91,3 +91,53 @@ describe('talking to the same NPC repeatedly', () => {
     expect(gertieSecond.text).not.toBe(strangerFirst.text);
   });
 });
+
+describe('reacting to what it saw', () => {
+  const attack = {
+    kind: 'player-attacked' as const,
+    at: 0,
+    position: { x: 0, y: 0, z: 0 },
+    witnessedBy: ['gertie'],
+    targetId: 'dummy-a',
+  };
+
+  it('brings up a punch it witnessed before anything else', async () => {
+    const brain = new StubNpcBrain(['small talk'], ['I saw that.']);
+    brain.observe(attack);
+    const reply = await brain.converse(context);
+    expect(reply.text).toBe('I saw that.');
+    expect(reply.mood).toBe('wary');
+  });
+
+  it('mentions it once, then goes back to small talk', async () => {
+    const brain = new StubNpcBrain(['small talk'], ['I saw that.']);
+    brain.observe(attack);
+    await brain.converse(context);
+    expect((await brain.converse(context)).text).toBe('small talk');
+  });
+
+  it('rolls a flurry of punches into a single remark', async () => {
+    const brain = new StubNpcBrain(['small talk'], ['I saw that.']);
+    brain.observe(attack);
+    brain.observe(attack);
+    brain.observe(attack);
+    await brain.converse(context);
+    expect((await brain.converse(context)).text).toBe('small talk');
+  });
+
+  it('escalates on repeat offences, then holds on its sternest line', async () => {
+    const brain = new StubNpcBrain(['small talk'], ['first', 'second']);
+    const heard: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      brain.observe(attack);
+      heard.push((await brain.converse(context)).text);
+    }
+    expect(heard).toEqual(['first', 'second', 'second']);
+  });
+
+  it('is not bothered by things that are not attacks', async () => {
+    const brain = new StubNpcBrain(['small talk'], ['I saw that.']);
+    brain.observe({ ...attack, kind: 'player-spoke' });
+    expect((await brain.converse(context)).text).toBe('small talk');
+  });
+});

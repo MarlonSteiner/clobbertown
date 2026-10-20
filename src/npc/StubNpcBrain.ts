@@ -6,34 +6,47 @@ import type {
 } from './NpcBrain';
 
 /**
- * The Phase 1 stand-in for a real NPC mind.
+ * The stand-in for a real NPC mind until Phase 3.
  *
- * It cycles through a handful of hardcoded lines and remembers nothing beyond
- * which line it said last. Its only job is to prove the interface: if the game
- * talks to this happily, it will talk to an LLM happily.
+ * It cycles through a handful of hardcoded lines, and remembers exactly one
+ * thing: how many punches it has watched land. If it saw any since the last
+ * conversation, it brings that up first.
+ *
+ * That one fact is the game's whole premise in miniature: the player does
+ * something, someone sees, and it changes what they say. It exists to prove
+ * that `observe()` is wired through end to end, so that Phase 3 swaps the mind
+ * and not the plumbing. It is not memory: it lives only as long as the page.
  */
 export class StubNpcBrain implements NpcBrain {
   private nextLineIndex = 0;
+  private attacksWitnessed = 0;
+  private attacksMentioned = 0;
+  private reactionsGiven = 0;
 
-  constructor(private readonly lines: readonly string[]) {}
+  constructor(
+    private readonly lines: readonly string[],
+    private readonly reactions: readonly string[] = [],
+  ) {}
 
   converse(context: ConversationContext): Promise<NpcUtterance> {
+    const npcId = context.npc.id;
+
+    // Something new to gossip about takes priority over small talk.
+    if (this.attacksWitnessed > this.attacksMentioned && this.reactions.length > 0) {
+      // Several punches between conversations earn one remark, not a backlog
+      // of them the player has to click through.
+      this.attacksMentioned = this.attacksWitnessed;
+      const text = this.reactions[Math.min(this.reactionsGiven, this.reactions.length - 1)] ?? '...';
+      this.reactionsGiven += 1;
+      return Promise.resolve({ npcId, text, mood: 'wary' });
+    }
+
     const line = this.lines[this.nextLineIndex % this.lines.length] ?? '...';
     this.nextLineIndex += 1;
-
-    return Promise.resolve({
-      npcId: context.npc.id,
-      text: line,
-      mood: 'friendly',
-    });
+    return Promise.resolve({ npcId, text: line, mood: 'friendly' });
   }
 
-  /**
-   * Deliberately empty. Phase 3 writes these to persistent memory and starts
-   * spreading them between neighbours; Phase 1 only needs the call to be safe
-   * to make, so that the call sites already exist when that lands.
-   */
-  observe(_observation: WorldObservation): void {
-    // No memory in Phase 1.
+  observe(observation: WorldObservation): void {
+    if (observation.kind === 'player-attacked') this.attacksWitnessed += 1;
   }
 }
