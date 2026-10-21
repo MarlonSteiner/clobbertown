@@ -60,8 +60,11 @@ of the screen says which mode you are in, and the dev server's terminal logs
 the tokens and cache hits behind each line.
 
 The key is read only by the dev server and never reaches the browser.
-`.env.local` is gitignored. Each line is one request to `claude-opus-5-5`, set
-in `server/claudeDialogue.ts`; as a rough guide, expect around a cent per line.
+`.env.local` is gitignored. Each line is one request to `claude-haiku-5-5`, set
+in `server/claudeDialogue.ts`. The model is a single constant there; switching
+it to `claude-opus-5-5` gives richer lines at about forty times the cost per
+token. Rough estimate for Haiku: a fraction of a cent per line. Check the real
+figure in the terminal, which logs the tokens each line used.
 
 ### What residents remember
 

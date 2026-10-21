@@ -58,9 +58,11 @@ describe('the request sent to the API', () => {
     expect(params.output_config?.effort).toBe('low');
   });
 
-  it('opts into the API’s refusal fallback', () => {
-    expect(params.fallbacks).toBe('default');
-    expect(params.betas).toContain('server-side-fallback-2026-07-01');
+  it('does not ask for a refusal fallback, which Haiku 5.5 does not have', () => {
+    // Haiku 5.5 has no server-side fallback: a declined request stays declined,
+    // and a fallback list is rejected. A refusal is handled by the canned line.
+    expect(params).not.toHaveProperty('fallbacks');
+    expect(params.betas ?? []).not.toContain('server-side-fallback-2026-07-01');
   });
 
   it('marks the end of the persona for caching, and nothing after it', () => {

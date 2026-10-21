@@ -3,8 +3,15 @@ import { cannedDialogue } from './cannedDialogue.ts';
 import { freshNews, type DialogueWriter, type LineRequest, type WrittenLine } from './DialogueWriter.ts';
 import { LINE_SCHEMA, parseLine, situation, systemPrompt } from './prompt.ts';
 
-/** The model that voices the residents. */
-export const DIALOGUE_MODEL = 'claude-opus-5-5';
+/**
+ * The model that voices the residents.
+ *
+ * Haiku 5.5 is the cheapest current model, at about 1/40 the price of Opus 5.5
+ * per token, which is what matters once every player pays for every line. It
+ * has no server-side refusal fallback, so a declined line falls back to the
+ * canned list instead (see `lineRequest`).
+ */
+export const DIALOGUE_MODEL = 'claude-haiku-5-5';
 
 /**
  * How long a player will wait for a reply before the resident falls back to a
@@ -79,11 +86,6 @@ export function lineRequest(request: LineRequest): Params {
       effort: 'low',
       format: { type: 'json_schema', schema: { ...LINE_SCHEMA, required: [...LINE_SCHEMA.required] } },
     },
-    // If the model's safety checks decline a line, the API retries it on a
-    // suitable fallback model within the same call, instead of returning a
-    // refusal the player would never understand.
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
     system: system.map((text, index) => ({
       type: 'text' as const,
       text,
