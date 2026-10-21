@@ -11,7 +11,7 @@ given anyway because it costs nothing and the packs are worth knowing about.
 | `public/models/buildings/suburban/house-*.glb` (8) | City Kit (Suburban) 2.0 | [Kenney](https://kenney.nl/assets/city-kit-suburban) | CC0 1.0 |
 | `public/models/buildings/commercial/shop-*.glb` (6) | City Kit (Commercial) 2.1 | [Kenney](https://kenney.nl/assets/city-kit-commercial) | CC0 1.0 |
 | `public/models/nature/tree-*.glb` (6) | Nature Kit | [Kenney](https://kenney.nl/assets/nature-kit) | CC0 1.0 |
-| `public/models/characters/casual-male.glb`, `chef-female.glb` | Ultimate Animated Character Pack (Nov 2019) | [Quaternius](https://quaternius.com/packs/ultimatedanimatedcharacter.html) | CC0 1.0 |
+| `public/models/characters/*.glb` (5: `casual-male`, `chef-female`, `old-classy-female`, `worker-male`, `cowboy-male`) | Ultimate Animated Character Pack (Nov 2019) | [Quaternius](https://quaternius.com/packs/ultimatedanimatedcharacter.html) | CC0 1.0 |
 
 Each directory carries the licence file that shipped with its pack. Those files
 are the record; this table is the summary.
@@ -65,9 +65,9 @@ fully metallic *and* has no metalness map.
 **Characters arrive with no skin colour.** Every character in the Quaternius
 pack exports its `Skin` material as near-black (`0.01, 0.01, 0.01`) with a
 separate near-white `Face` material over a small patch, so the townsfolk render
-as silhouettes. The value is byte-identical across the pack, which is what
-marks it as an export artefact rather than a decision about any particular
-character. `CharacterModel.tsx` replaces it with `PALETTE.skin`; change that one
+as silhouettes. The value is byte-identical across the pack (all five
+characters used here carry it), which is what marks it as an export artefact
+rather than a decision about any particular character. `CharacterModel.tsx` replaces it with `PALETTE.skin`; change that one
 constant to change the townsfolk.
 
 ## Animation
