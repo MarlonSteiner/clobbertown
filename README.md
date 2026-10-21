@@ -4,11 +4,11 @@
 
 > ### 🚧 Work in progress
 >
-> This is an early prototype, not a finished game. Phase 2 of five is done:
-> you can walk around a town, punch training dummies, and talk to one
-> resident, who notices what you have been punching. **Residents do not have
-> real memories yet**, which is the point of the whole game; that is Phase 3.
-> Expect things to change, break, and get rewritten.
+> This is an early prototype, not a finished game. Phase 3 of five is under
+> way: you can walk around a town, punch training dummies, and talk to four
+> residents who remember what you did, even after a reload, and gossip about
+> it to each other. With an API key, Claude writes what they say. Expect
+> things to change, break, and get rewritten.
 
 A stylised low-poly brawler set in a small town where every resident remembers
 what you did and tells their neighbours about it.
@@ -41,9 +41,37 @@ The click-to-play screen is not decoration: browsers only grant pointer lock in
 response to a real user gesture, so the game cannot capture the mouse on load.
 
 The first load takes a few seconds while Rapier's WebAssembly physics engine
-compiles and the models download, around 4MB in total. The overlay says
+compiles and the models download, around 8MB in total. The overlay says
 "Building the town…" until everything is ready, and cannot be clicked through
 before then.
+
+### Letting Claude voice the residents
+
+Without any setup, residents speak from short canned lists. Their memory and
+gossip still work, and the game is fully playable. To have Claude write what
+they say instead:
+
+```bash
+cp .env.example .env.local
+```
+
+Put an Anthropic API key in `.env.local` and restart `npm run dev`. The corner
+of the screen says which mode you are in, and the dev server's terminal logs
+the tokens and cache hits behind each line.
+
+The key is read only by the dev server and never reaches the browser.
+`.env.local` is gitignored. Each line is one request to `claude-opus-5-5`, set
+in `server/claudeDialogue.ts`; as a rough guide, expect around a cent per line.
+
+### What residents remember
+
+Everything residents see is saved to `saves/memory.json` (gitignored) and
+survives reloads and restarts. Open it to see exactly what the town knows.
+To wipe it and start a playtest over:
+
+```bash
+npm run forget
+```
 
 ### Other commands
 
@@ -51,6 +79,7 @@ before then.
 npm test        # run the unit tests
 npm run build   # type-check and build for production
 npm run typecheck
+npm run forget  # make every resident forget everything
 ```
 
 ## Roadmap
@@ -59,12 +88,15 @@ npm run typecheck
 | --- | --- | --- |
 | 1 | Third-person character walking around a small town | ✅ Done |
 | 2 | Melee combat against dummy targets | ✅ Done |
-| 3 | LLM-driven NPCs with persistent memory, and gossip between them | ⬜ Not started |
+| 3 | LLM-driven NPCs with persistent memory, and gossip between them | 🚧 In progress |
 | 4 | Electron wrapper and a Steam build pipeline via GitHub Actions | ⬜ Not started |
 | 5 | Optional co-op or PvP | ⬜ Not started |
 
-Phase 3 is the one the whole design hangs on, and the architecture is already
-shaped around it — see the NPC interface below.
+Phase 3 is the one the whole design hangs on. The residents' brains run on a
+small server inside the Vite dev server (`server/`), because an API key in
+browser code is readable by anyone. How that ships in a Steam build is a
+Phase 4 decision: a build cannot carry a developer's key, so it needs either a
+hosted server or players supplying their own.
 
 ## How the code is arranged
 
@@ -74,31 +106,41 @@ src/
   scene/         The town: layout data, buildings, ground, lighting
   player/        Character controller, movement maths, follow camera
   input/         Keyboard and pointer-lock handling
-  npc/           The NPC brain interface and its Phase 1 stub
+  combat/        Punches, dummies, the hit freeze, and who saw what
+  npc/           Who lives here, the brain interface, and its implementations
   interaction/   Proximity detection and the talk-to-someone flow
   state/         Zustand store, for UI-facing state only
   ui/            HTML drawn over the 3D scene
+server/          The residents' brains: memory, gossip, and dialogue
 ```
 
-Three decisions are worth knowing before you read anything else.
+Four decisions are worth knowing before you read anything else.
 
 **All tuning lives in [`src/config/tuning.ts`](src/config/tuning.ts).** Walk
 speed, jump height, camera distance, camera smoothing, interaction range. If a
 number would change how the game feels, it is in that file and nowhere else, so
 the game can be feel-tested by editing one file.
 
-**The NPC interface is the one abstraction built ahead of need.**
-[`src/npc/NpcBrain.ts`](src/npc/NpcBrain.ts) is the seam Phase 3 slots into.
-Phase 1 ships `StubNpcBrain`, which returns canned lines and forgets
-everything. Two details exist purely to protect the eventual swap:
+**The NPC interface was the one abstraction built ahead of need.**
+[`src/npc/NpcBrain.ts`](src/npc/NpcBrain.ts) was designed in Phase 1 for Phase 3
+to slot into, and it did: the game now talks to `RemoteNpcBrain` instead of the
+original stub, and nothing that talks to a brain had to change. Two details
+existed purely to protect that swap:
 
 - `converse()` returns a `Promise` even though the stub could answer
   synchronously, because a real brain is a network round-trip and a synchronous
   signature would mean rewriting every call site later.
-- `observe()` is how the town learns what the player did. Phase 2 is its first
-  real use: every landed punch is reported to each resident close enough to
-  see it, with the full list of who else saw, which is what Phase 3's gossip
-  will spread. Without it, memory has no way in.
+- `observe()` is how the town learns what the player did: every landed punch
+  is reported to each resident close enough to see it, with the full list of
+  who else saw, which is what gossip spreads. Without it, memory has no way in.
+
+**Who knows what is decided by code, not by the model.**
+[`server/knowledge.ts`](server/knowledge.ts) works out what each resident knows
+from the log of events and who is friends with whom: news starts with the
+witnesses and travels one friend per `GOSSIP.hopDelaySeconds`, credited to
+whoever passed it on. Claude is told those facts and only chooses the wording.
+That keeps gossip predictable and testable, and stops the model inventing
+things the player never did.
 
 **Per-frame state stays out of React.** Input, velocity, player position and
 the current animation clip all live in refs, and the Zustand store only holds
@@ -107,10 +149,11 @@ second into React state would re-render the scene at frame rate for no benefit.
 
 ## Testing
 
-The movement maths, animation selection, the interaction range check, the town
-layout and the NPC brain contract all have unit tests, so the feel of the
-character and the arrangement of the town can be checked without a browser or a
-physics world. The layout tests are worth knowing about: they check that no two
+The movement maths, animation selection, combat timing, the town layout, and
+the brain server's memory, gossip and prompts all have unit tests, so they can
+be checked without a browser, a physics world, or an API key. The calls to
+Claude are tested against a scripted stand-in, which checks exactly what would
+be sent and how every kind of failure falls back, at no cost. The layout tests are worth knowing about: they check that no two
 building plots overlap and that nothing is standing in a road, which is tedious
 to verify by walking around and easy to break by nudging one number.
 
