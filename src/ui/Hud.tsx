@@ -1,6 +1,7 @@
 import { NPCS } from '../npc/roster';
 import { useGameStore } from '../state/useGameStore';
 import { DialogueBox } from './DialogueBox';
+import { describeBrainStatus, useBrainStatus } from './useBrainStatus';
 
 /**
  * Everything drawn over the 3D scene while playing.
@@ -13,6 +14,7 @@ export function Hud() {
   const nearbyNpcId = useGameStore((state) => state.nearbyNpcId);
   const dialogue = useGameStore((state) => state.dialogue);
   const isPending = useGameStore((state) => state.isDialoguePending);
+  const brainStatus = useBrainStatus();
 
   const nearbyName = NPCS.find((npc) => npc.identity.id === nearbyNpcId)?.identity.name;
   // Once someone is talking, the prompt would only be repeating what the
@@ -29,7 +31,7 @@ export function Hud() {
 
       <DialogueBox utterance={dialogue} isPending={isPending} speakerId={nearbyNpcId} />
 
-      <div className="corner-hint">Phase 2 · punch a dummy, then see what Gertie says</div>
+      <div className="corner-hint">Phase 3 · residents remember · {describeBrainStatus(brainStatus)}</div>
     </div>
   );
 }

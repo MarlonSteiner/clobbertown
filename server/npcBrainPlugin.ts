@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { BRAIN_API } from '../src/npc/brainProtocol.ts';
 import { cannedDialogue } from './cannedDialogue.ts';
-import type { DialogueWriter } from './DialogueWriter.ts';
+import { createClaudeDialogue } from './claudeDialogue.ts';
 import { MemoryStore } from './MemoryStore.ts';
 import { converse, forget, observe, status, type BrainServer, type Reply } from './routes.ts';
 
@@ -13,8 +13,11 @@ const MAX_BODY_BYTES = 16 * 1024;
 export interface NpcBrainOptions {
   /** Where memories are saved, relative to the project root. */
   savePath: string;
-  /** Writes the dialogue. Canned lines unless the caller provides a model-backed writer. */
-  writer?: DialogueWriter;
+  /**
+   * The Anthropic API key, read from `.env.local` by the Vite config. Without
+   * one, residents speak from their canned lines; memory and gossip still work.
+   */
+  apiKey: string | undefined;
 }
 
 /**
@@ -33,9 +36,10 @@ export function npcBrainServer(options: NpcBrainOptions): Plugin {
     apply: 'serve',
 
     configureServer(server) {
+      const log = (message: string) => server.config.logger.info(message, { timestamp: true });
       const brains: BrainServer = {
         store: new MemoryStore(resolve(server.config.root, options.savePath)),
-        writer: options.writer ?? cannedDialogue,
+        writer: options.apiKey ? createClaudeDialogue(options.apiKey, log) : cannedDialogue,
         now: () => Date.now(),
       };
 
