@@ -1,6 +1,7 @@
 import type { NpcBrain, NpcIdentity } from './NpcBrain';
 import { yawToward } from '../player/movement';
 import { SPAWN } from '../player/spawn';
+import { findResident, RESIDENTS } from './residents';
 import { StubNpcBrain } from './StubNpcBrain';
 
 /** An NPC as the scene needs it: who they are, where they stand, and their mind. */
@@ -15,72 +16,62 @@ export interface NpcSpec {
 }
 
 /**
- * Everyone in town. One resident in Phase 1, standing in the square.
- *
- * Brains are created here and nowhere else. That makes this file the single
- * place Phase 3 edits to swap `StubNpcBrain` for the real implementation.
+ * Everyone in town, placed in the scene. Derived from `residents.ts`, which is
+ * where a resident is actually defined.
  */
-const GERTIE_AT: [x: number, z: number] = [4, 3];
+export const NPCS: NpcSpec[] = RESIDENTS.map((resident) => ({
+  identity: resident.identity,
+  model: resident.model,
+  position: resident.home,
+  // Facing where the player starts, so the first thing they see of someone is
+  // their face and not their back.
+  facing: yawToward(resident.home, [SPAWN[0], SPAWN[2]]),
+}));
 
-export const NPCS: NpcSpec[] = [
-  {
-    identity: {
-      id: 'gertie',
-      name: 'Gertie',
-      role: 'Runs the bakery. Knows everyone, and tells everyone.',
-    },
-    // A chef, because she runs the bakery. Phase 3 will want the role and the
-    // look to agree, since the LLM is told what she does for a living.
-    model: 'characters/chef-female.glb',
-    position: GERTIE_AT,
-    // Facing where the player starts, so the first thing they see of her is
-    // her face and not her back.
-    facing: yawToward(GERTIE_AT, [SPAWN[0], SPAWN[2]]),
-  },
-];
+/** Builds the mind for one resident. */
+export type BrainFactory = (npcId: string) => NpcBrain;
 
+/**
+ * The default mind: canned lines, held in memory for as long as the page is
+ * open. Used by the tests, and anywhere no brain server is available.
+ */
+export const stubBrainFactory: BrainFactory = (npcId) => {
+  const resident = findResident(npcId);
+  return new StubNpcBrain(resident?.smallTalk ?? ['...'], resident?.reactions ?? []);
+};
+
+let createBrain: BrainFactory = stubBrainFactory;
 const brains = new Map<string, NpcBrain>();
+
+/**
+ * Chooses what kind of mind every resident gets.
+ *
+ * This is the swap the NpcBrain interface was built for. The game calls it
+ * once at startup to use the brain server; nothing that talks to a brain has
+ * to know or care which kind it is talking to.
+ */
+export function setBrainFactory(factory: BrainFactory): void {
+  createBrain = factory;
+  brains.clear();
+}
 
 /**
  * The brain for an NPC, created on first use.
  *
- * Callers ask for a brain by id rather than holding one, so that Phase 3 can
- * change how brains are built, shared, or persisted without touching the
- * scene. The stub lines below are the only hardcoded dialogue in the game.
+ * Callers ask for a brain by id rather than holding one, so that how brains
+ * are built, shared or persisted can change without touching the scene.
  */
 export function getNpcBrain(npcId: string): NpcBrain {
   const existing = brains.get(npcId);
   if (existing) return existing;
 
-  const brain = new StubNpcBrain(STUB_LINES[npcId] ?? DEFAULT_LINES, STUB_REACTIONS[npcId] ?? []);
+  const brain = createBrain(npcId);
   brains.set(npcId, brain);
   return brain;
 }
 
-/** Clears every cached brain. Exists so tests start from a known state. */
+/** Clears every cached brain and restores the default. Exists so tests start clean. */
 export function resetNpcBrains(): void {
+  createBrain = stubBrainFactory;
   brains.clear();
 }
-
-const DEFAULT_LINES: readonly string[] = ['...'];
-
-const STUB_LINES: Record<string, readonly string[]> = {
-  gertie: [
-    "Morning. You're new, aren't you? Don't worry, everyone'll know by lunchtime.",
-    "Careful round the square. People here have long memories.",
-    "I'd tell you what the smith said about you, but I'm not one to gossip.",
-  ],
-};
-
-/**
- * What a resident says after watching the player hit something. The first line
- * is for the first time; the last repeats for every time after, which is about
- * how patient Gertie is.
- */
-const STUB_REACTIONS: Record<string, readonly string[]> = {
-  gertie: [
-    "I saw that. What did that dummy ever do to you?",
-    "Again? You'll have the whole square talking by supper.",
-    "Keep that up and nobody in this town will sell you so much as a bun.",
-  ],
-};

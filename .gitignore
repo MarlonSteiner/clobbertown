@@ -34,3 +34,6 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# NPC memories, written by the brain server while you play
+saves/

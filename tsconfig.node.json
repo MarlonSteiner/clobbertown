@@ -9,6 +9,7 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
   },
   "include": ["vite.config.ts"]

@@ -182,3 +182,16 @@ export const COMBAT = {
    */
   witnessRange: 18,
 } as const;
+
+export const GOSSIP = {
+  /**
+   * How long news takes to pass from one resident to a neighbour. Short, so a
+   * playtest can watch it travel; a real game would want minutes, not seconds.
+   */
+  hopDelaySeconds: 30,
+  /**
+   * How many retellings news survives before nobody bothers passing it on.
+   * Keeps a punch on one side of town from becoming common knowledge everywhere.
+   */
+  maxHops: 3,
+} as const;

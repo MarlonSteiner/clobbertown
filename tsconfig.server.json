@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node", "vitest/globals"],
+
+    /* Same strictness as the game. The server handles untrusted JSON from the
+       browser and a paid API, which is where a silent undefined costs most. */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.server.tsbuildinfo"
+  },
+  "include": ["server"]
+}

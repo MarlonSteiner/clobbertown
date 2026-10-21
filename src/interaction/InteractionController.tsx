@@ -56,6 +56,9 @@ export function InteractionController({
     input.current.interactPressed = false;
 
     if (paused || nearbyId === null) return;
+    // Already waiting on this resident. With a language model behind them an
+    // answer takes seconds, and every extra press would be another paid call.
+    if (pendingForNpcId.current === nearbyId) return;
     void speakTo(nearbyId, player);
   });
 
