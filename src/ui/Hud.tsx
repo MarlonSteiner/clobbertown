@@ -1,5 +1,6 @@
 import { NPCS } from '../npc/roster';
 import { useGameStore } from '../state/useGameStore';
+import { ClockReadout } from './ClockReadout';
 import { DialogueBox } from './DialogueBox';
 import { describeBrainStatus, useBrainStatus } from './useBrainStatus';
 
@@ -31,7 +32,9 @@ export function Hud() {
 
       <DialogueBox utterance={dialogue} isPending={isPending} speakerId={nearbyNpcId} />
 
-      <div className="corner-hint">Phase 3 · residents remember · {describeBrainStatus(brainStatus)}</div>
+      <div className="corner-hint">
+        <ClockReadout /> · Phase 3 · residents remember · {describeBrainStatus(brainStatus)}
+      </div>
     </div>
   );
 }

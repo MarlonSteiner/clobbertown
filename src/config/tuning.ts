@@ -195,3 +195,22 @@ export const GOSSIP = {
    */
   maxHops: 3,
 } as const;
+
+export const CLOCK = {
+  /**
+   * How many real seconds one game day lasts. 1200 is twenty minutes, so one
+   * game hour is fifty seconds: long enough to see a resident walk somewhere
+   * and settle, short enough that a playtest sees the whole day.
+   */
+  dayLengthSeconds: 1200,
+  /** The hour of day when the game starts. Morning, so the bakery is open. */
+  startHour: 8,
+} as const;
+
+export const ROUTINE = {
+  /**
+   * How fast residents walk, in metres per real second. Slower than the
+   * player on purpose: they are going about their day, not hurrying to you.
+   */
+  walkSpeed: 2.0,
+} as const;

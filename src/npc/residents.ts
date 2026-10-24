@@ -1,4 +1,5 @@
 import type { NpcIdentity } from './NpcBrain.ts';
+import type { ScheduleEntry } from './routine.ts';
 
 /**
  * Who lives in Clobbertown.
@@ -16,8 +17,13 @@ export interface Resident {
    * character brief an actor would get.
    */
   persona: string;
-  /** Where they stand, on the ground plane. */
+  /** Where they stand, on the ground plane, when they are not walking. */
   home: [x: number, z: number];
+  /**
+   * Their day, as blocks of hours. Starts and ends at `home`, so the day
+   * joins up without anyone walking at midnight. See `routine.ts`.
+   */
+  schedule: ScheduleEntry[];
   /** Character model, under `public/models/`. */
   model: string;
   /**
@@ -55,6 +61,16 @@ export const RESIDENTS: Resident[] = [
       'humour, and cannot resist hinting at things she has heard. Kind to ' +
       'newcomers until given a reason not to be.',
     home: [4, 3],
+    schedule: [
+      { from: 0, to: 7, stands: [4, 3] },
+      // Opens the bakery counter, walking the high street to the west end.
+      { from: 7, to: 12, stands: [-37, -13], via: [[-30, 3], [-30, -2]] },
+      // Lunch on the square.
+      { from: 12, to: 18, stands: [-2, 2], via: [[-30, -2], [-30, 3]] },
+      // Evenings at the inn, where Odile is.
+      { from: 18, to: 21, stands: [22, -13], via: [[22, 3]] },
+      { from: 21, to: 24, stands: [4, 3], via: [[22, 3]] },
+    ],
     model: 'characters/chef-female.glb',
     // Odile buys her bread for the inn; Wilf grows her flour.
     neighbours: ['odile', 'wilf'],
@@ -82,6 +98,16 @@ export const RESIDENTS: Resident[] = [
       'on, though she would call it "keeping people informed". Fond of ' +
       'dramatic pauses and pet names.',
     home: [22, -12],
+    schedule: [
+      { from: 0, to: 8, stands: [22, -12] },
+      // Buys bread from Gertie before the morning rush.
+      { from: 8, to: 10, stands: [-34, -12], via: [[22, 3], [-30, 3], [-30, -2]] },
+      // Gossips on the square benches.
+      { from: 10, to: 12, stands: [6, -3], via: [[-30, -2]] },
+      // Runs the inn from its front door through the afternoon and evening.
+      { from: 12, to: 22, stands: [26, -13], via: [[22, 3]] },
+      { from: 22, to: 24, stands: [22, -12] },
+    ],
     model: 'characters/old-classy-female.glb',
     // Gertie's bread is on every table at the inn; Bram drinks there nightly.
     neighbours: ['gertie', 'bram'],
@@ -109,6 +135,14 @@ export const RESIDENTS: Resident[] = [
       'unfriendly, simply unhurried, with a dry humour that surfaces rarely ' +
       'and without warning. Rarely uses names.',
     home: [37, -9],
+    schedule: [
+      { from: 0, to: 7, stands: [37, -9] },
+      // At the forge all day, which is also where he lives.
+      { from: 7, to: 18, stands: [34, -10] },
+      // A drink at the inn, where he sees Odile.
+      { from: 18, to: 20, stands: [30, -11] },
+      { from: 20, to: 24, stands: [37, -9] },
+    ],
     model: 'characters/worker-male.glb',
     // He only really talks to Odile, at the inn of an evening.
     neighbours: ['odile'],
@@ -128,6 +162,25 @@ export const RESIDENTS: Resident[] = [
       'best of everyone until he is told otherwise, then worries about it ' +
       'out loud.',
     home: [29, 29.5],
+    schedule: [
+      { from: 0, to: 9, stands: [29, 29.5] },
+      // Delivers flour to the bakery in the morning.
+      {
+        from: 9,
+        to: 11,
+        stands: [-40, -13],
+        via: [[30, 8], [30, 3], [-30, 3], [-30, -2]],
+      },
+      {
+        from: 11,
+        to: 17,
+        stands: [29, 29.5],
+        via: [[-30, -2], [-30, 3], [30, 3], [30, 8]],
+      },
+      // Afternoon on the square, talking about his geese.
+      { from: 17, to: 22, stands: [10, -5], via: [[30, 8], [30, 3]] },
+      { from: 22, to: 24, stands: [29, 29.5], via: [[30, 3], [30, 8]] },
+    ],
     model: 'characters/cowboy-male.glb',
     // Supplies Gertie's flour, and hears all her news when he delivers it.
     neighbours: ['gertie'],

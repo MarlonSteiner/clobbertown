@@ -2,15 +2,10 @@ import { useRef, type RefObject } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type * as THREE from 'three';
 import type { InputState } from '../input/InputState';
+import { liveResidents } from '../npc/livePositions';
 import { getNpcBrain, NPCS } from '../npc/roster';
 import { useGameStore } from '../state/useGameStore';
 import { findNearest } from './proximity';
-
-/** The NPCs, reshaped once into the flat form the proximity check wants. */
-const INTERACTABLES = NPCS.map((npc) => ({
-  id: npc.identity.id,
-  position: { x: npc.position[0], z: npc.position[1] },
-}));
 
 /**
  * Watches for the player standing near someone and pressing the interact key.
@@ -36,9 +31,11 @@ export function InteractionController({
     const store = useGameStore.getState();
     const player = playerPosition.current;
 
+    // Read each frame, because residents walk about: someone who was at the
+    // bakery a moment ago may now be on the square.
     const nearbyId = findNearest(
       { x: player.x, z: player.z },
-      INTERACTABLES,
+      liveResidents(),
       store.nearbyNpcId,
     );
     store.setNearbyNpc(nearbyId);

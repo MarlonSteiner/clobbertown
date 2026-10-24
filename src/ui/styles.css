@@ -202,3 +202,9 @@ kbd {
   color: var(--parchment);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+
+/* The time of day, shown beside the corner hint. */
+.clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}

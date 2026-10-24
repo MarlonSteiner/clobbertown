@@ -2,6 +2,7 @@ import type { NpcBrain, NpcIdentity } from './NpcBrain';
 import { yawToward } from '../player/movement';
 import { SPAWN } from '../player/spawn';
 import { findResident, RESIDENTS } from './residents';
+import type { ScheduleEntry } from './routine';
 import { StubNpcBrain } from './StubNpcBrain';
 
 /** An NPC as the scene needs it: who they are, where they stand, and their mind. */
@@ -9,10 +10,12 @@ export interface NpcSpec {
   identity: NpcIdentity;
   /** Character model, under `public/models/`. */
   model: string;
-  /** Where they stand, on the ground plane. */
+  /** Where they stand when they start the day, on the ground plane. */
   position: [x: number, z: number];
-  /** Which way they face, in radians. */
+  /** Which way they face when standing, in radians. */
   facing: number;
+  /** Their day: where they are at each hour. */
+  schedule: ScheduleEntry[];
 }
 
 /**
@@ -23,6 +26,7 @@ export const NPCS: NpcSpec[] = RESIDENTS.map((resident) => ({
   identity: resident.identity,
   model: resident.model,
   position: resident.home,
+  schedule: resident.schedule,
   // Facing where the player starts, so the first thing they see of someone is
   // their face and not their back.
   facing: yawToward(resident.home, [SPAWN[0], SPAWN[2]]),

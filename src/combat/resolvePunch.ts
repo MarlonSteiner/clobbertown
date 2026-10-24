@@ -1,17 +1,12 @@
 import type { RefObject } from 'react';
 import { COMBAT } from '../config/tuning';
-import { getNpcBrain, NPCS } from '../npc/roster';
+import { liveResidents } from '../npc/livePositions';
+import { getNpcBrain } from '../npc/roster';
 import { DUMMY_TARGETS } from './dummies';
 import { reportHit } from './dummyHits';
 import { triggerHitstop } from './hitstop';
 import { findPunchTargets } from './reach';
 import { findWitnesses } from './witnesses';
-
-/** The residents in the flat shape the witness check wants, computed once. */
-const RESIDENTS = NPCS.map((npc) => ({
-  id: npc.identity.id,
-  position: { x: npc.position[0], z: npc.position[1] },
-}));
 
 /**
  * Works out what a landed punch did, and tells everything that cares.
@@ -51,7 +46,8 @@ export function resolvePunch(
  * Phase 3's gossip needs to know who else saw it as well as that it happened.
  */
 function tellWitnesses(origin: { x: number; y: number; z: number }, struck: readonly string[]): void {
-  const witnesses = findWitnesses(origin, RESIDENTS);
+  // Where residents are at the moment of the punch, not where they started the day.
+  const witnesses = findWitnesses(origin, liveResidents());
   if (witnesses.length === 0) return;
 
   const at = Date.now();

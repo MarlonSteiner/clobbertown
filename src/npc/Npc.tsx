@@ -1,50 +1,74 @@
 import { useRef } from 'react';
-import { CapsuleCollider, RigidBody } from '@react-three/rapier';
+import { useFrame } from '@react-three/fiber';
+import { CapsuleCollider, RigidBody, type RapierRigidBody } from '@react-three/rapier';
+import * as THREE from 'three';
 import { PALETTE } from '../config/palette';
 import { PLAYER } from '../config/tuning';
+import { currentHour } from '../world/clock';
 import { CharacterModel, type AnimationRequest } from '../scene/CharacterModel';
 import { useGameStore } from '../state/useGameStore';
+import { setLivePosition } from './livePositions';
 import type { NpcSpec } from './roster';
+import { poseAt } from './routine';
 
 /**
- * One resident, standing in place.
+ * One resident, going about their day.
  *
- * NPCs use the same collider proportions as the player, so the town treats
- * everyone as the same size of obstacle. They do not move in Phase 1, so the
- * body is fixed and the clip is always Idle; Phase 3 gives them somewhere to
- * be and the same walk cycle the player already uses.
+ * Each frame, the resident's hour is worked out from the clock and their
+ * schedule says where they should be. The body is kinematic: it is moved
+ * directly, not simulated, so a resident can never be knocked about, and the
+ * player still collides with them as they pass.
  */
 export function Npc({ spec }: { spec: NpcSpec }) {
-  const [x, z] = spec.position;
   const isNearby = useGameStore((state) => state.nearbyNpcId === spec.identity.id);
 
-  // Constant for now, but typed as a ref so that giving NPCs a walk cycle in
-  // Phase 3 needs no change on this side of the interface.
+  const body = useRef<RapierRigidBody>(null);
+  const turning = useRef<THREE.Group>(null);
   const animation = useRef<AnimationRequest>({ clip: 'Idle', take: 0 });
 
   const height = PLAYER.modelHeight;
+  const centreY = height / 2;
+
+  useFrame(() => {
+    const rigidBody = body.current;
+    const group = turning.current;
+    if (!rigidBody || !group) return;
+
+    const pose = poseAt(spec.schedule, currentHour(), spec.facing);
+    rigidBody.setNextKinematicTranslation({ x: pose.x, y: centreY, z: pose.z });
+    group.rotation.y = pose.facing;
+    setLivePosition(spec.identity.id, pose.x, pose.z);
+
+    // Mutated in place, as the player's animation is, rather than replaced.
+    animation.current.clip = pose.moving ? 'Walk' : 'Idle';
+  });
+
+  const [startX, startZ] = spec.position;
 
   return (
     <RigidBody
-      type="fixed"
+      ref={body}
+      type="kinematicPosition"
       colliders={false}
-      position={[x, height / 2, z]}
-      rotation={[0, spec.facing, 0]}
+      position={[startX, centreY, startZ]}
+      enabledRotations={[false, false, false]}
     >
       <CapsuleCollider args={[PLAYER.capsuleHalfHeight, PLAYER.capsuleRadius]} />
 
-      <group position={[0, -height / 2, 0]}>
-        <CharacterModel model={spec.model} height={height} animation={animation} />
-      </group>
+      <group ref={turning}>
+        <group position={[0, -height / 2, 0]}>
+          <CharacterModel model={spec.model} height={height} animation={animation} />
+        </group>
 
-      {/* A ring on the ground when in range. The HUD prompt says what to press;
-          this says who it would be talking to. */}
-      {isNearby && (
-        <mesh position={[0, -height / 2 + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[PLAYER.capsuleRadius * 1.6, PLAYER.capsuleRadius * 2.1, 24]} />
-          <meshBasicMaterial color={PALETTE.playerAccent} transparent opacity={0.9} />
-        </mesh>
-      )}
+        {/* A ring on the ground when in range. The HUD prompt says what to press;
+            this says who it would be talking to. Turns with the resident. */}
+        {isNearby && (
+          <mesh position={[0, -height / 2 + 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[PLAYER.capsuleRadius * 1.6, PLAYER.capsuleRadius * 2.1, 24]} />
+            <meshBasicMaterial color={PALETTE.playerAccent} transparent opacity={0.9} />
+          </mesh>
+        )}
+      </group>
     </RigidBody>
   );
 }

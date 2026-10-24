@@ -66,6 +66,19 @@ it to `claude-opus-5-5` gives richer lines at about forty times the cost per
 token. Rough estimate for Haiku: a fraction of a cent per line. Check the real
 figure in the terminal, which logs the tokens each line used.
 
+### Daily routines
+
+The town has a clock in the corner of the screen. A game day lasts twenty
+minutes, so one game hour is fifty seconds. Residents follow a daily routine,
+set in `schedule` in [`src/npc/residents.ts`](src/npc/residents.ts): Gertie
+opens the bakery in the morning, Odile runs the inn through the afternoon, and
+so on. Walks follow the high street, and a test checks that no route passes
+through a building or a tree, and that every walk finishes inside its block.
+
+Walk times depend on the day length, so changing `CLOCK.dayLengthSeconds` in
+`tuning.ts` may make some walks run past their block. The schedule tests will
+say which.
+
 ### What residents remember
 
 Everything residents see is saved to `saves/memory.json` (gitignored) and
